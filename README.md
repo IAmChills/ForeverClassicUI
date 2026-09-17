@@ -16,6 +16,7 @@ Open **HUD Edit Mode** (or `/fcui options`) and use the Classic UI checkboxes t
 *   Party Frames
 *   Cast Bar
 *   Minimap
+*   Level Alert
 
 ## Commands
 

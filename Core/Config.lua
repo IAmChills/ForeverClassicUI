@@ -8,6 +8,7 @@ ns.Defaults = {
   partyFrames = false,
   castBars = false,
   minimap = false,
+  hideLevelAlert = false,
   hideModernChrome = true,
   debug = false,
 }
@@ -53,6 +54,13 @@ ns.OptionMeta = {
     label = "Minimap",
     help = "Apply Classic minimap border and chrome.",
     editMode = true,
+  },
+  {
+    key = "hideLevelAlert",
+    label = "Level Alert",
+    help = "Hide the center banner when you level up. Raid warnings and other alerts still show.",
+    editMode = true,
+    live = true,
   },
   {
     key = "hideModernChrome",

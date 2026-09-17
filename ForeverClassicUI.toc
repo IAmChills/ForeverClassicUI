@@ -16,6 +16,7 @@ Core\Util.lua
 Core\Config.lua
 Core\Probe.lua
 Core\EditMode.lua
+Core\LevelAlert.lua
 
 # Skins
 Skins\PlayerFrame.lua

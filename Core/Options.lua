@@ -29,7 +29,9 @@ local function MakeCheckbox(parent, option, index)
     else
       ns.db[option.key] = checked
     end
-    if option.key ~= "debug" and not ns.skinsLive then
+    if option.live then
+      ns.Print("Saved.", option.label, checked and "on" or "off")
+    elseif option.key ~= "debug" and not ns.skinsLive then
       ns.Print("Saved.", option.label, checked and "on" or "off", "- Classic art is not applied yet.")
     elseif option.key ~= "debug" then
       ns.Print("Change stored. /reload to fully reapply skins.")

@@ -16,6 +16,7 @@ local defaults = {
     partyFrames = false,
     castBars = false,
     minimap = false,
+    hideLevelAlert = false,
     hideModernChrome = true,
     debug = false,
   },
@@ -64,6 +65,9 @@ function ns.SetOption(key, value)
   ns.db[key] = value and true or false
   if ns.RefreshEditModeOptions then
     ns.RefreshEditModeOptions()
+  end
+  if ns.ApplyLevelAlertVisibility then
+    ns.ApplyLevelAlertVisibility()
   end
   if ns.skinsLive then
     ns.ApplySkins()
@@ -208,6 +212,9 @@ SlashCmdList.FOREVERCLASSICUI = function(msg)
     ns.db = ForeverClassicUIDB.profile
     if ns.RefreshEditModeOptions then
       ns.RefreshEditModeOptions()
+    end
+    if ns.ApplyLevelAlertVisibility then
+      ns.ApplyLevelAlertVisibility()
     end
     ns.Print("Settings reset.")
     return

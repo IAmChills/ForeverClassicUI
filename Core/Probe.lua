@@ -98,6 +98,10 @@ function ns.RunProbe(printToChat)
     "CompactRaidFrameContainer",
     "MainMenuBar",
     "StatusTrackingBarManager",
+    "RaidWarningFrame",
+    "RaidBossEmoteFrame",
+    "PrivateRaidBossEmoteFrameAnchor",
+    "EventToastManagerFrame",
   }
   for i = 1, #globals do
     local name = globals[i]

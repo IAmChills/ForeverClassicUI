@@ -75,7 +75,9 @@ local function AddTooltip(box, option)
         tooltip:SetOwner(self, "ANCHOR_RIGHT")
         tooltip:SetText(option.label, 1, 0.82, 0)
         tooltip:AddLine(option.help, 1, 1, 1, true)
-        tooltip:AddLine("Skin is stored only. Classic art is not applied yet.", 0.7, 0.7, 0.7, true)
+        if not option.live then
+          tooltip:AddLine("Skin is stored only. Classic art is not applied yet.", 0.7, 0.7, 0.7, true)
+        end
         tooltip:Show()
       end)
       region:HookScript("OnLeave", function()

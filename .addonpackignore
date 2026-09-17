@@ -1,0 +1,13 @@
+# folders
+.git
+.gitkeep
+.vscode
+
+# files
+*.md
+*.addonpackignore
+*.gitignore
+*.gitkeep
+*.png
+*.svg
+LICENSE

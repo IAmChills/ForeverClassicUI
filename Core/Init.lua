@@ -100,6 +100,10 @@ function ns.SetOption(key, value)
   if not ns.db then
     return
   end
+  -- Always write through ForeverClassicUIDB so SavedVariables stay in sync.
+  ForeverClassicUIDB = ForeverClassicUIDB or {}
+  ForeverClassicUIDB.profile = ForeverClassicUIDB.profile or ns.db
+  ns.db = ForeverClassicUIDB.profile
   ns.db[key] = value and true or false
   if ns.RefreshEditModeOptions then
     ns.RefreshEditModeOptions()
@@ -166,6 +170,7 @@ function ns.ApplySkins()
           end
         end
         ns.applied[name] = false
+        -- RefreshNative hides addon overlays. Avoid ToPlayerArt/UpdateArt (secret taint).
         if ns.RefreshNative then
           pcall(ns.RefreshNative, name)
         end
@@ -187,6 +192,9 @@ local function OnAddonLoaded(_, addonName)
   end
 
   ForeverClassicUIDB = CopyDefaults(defaults, ForeverClassicUIDB)
+  -- Drop debug probe dumps if an older build wrote them into SV.
+  ForeverClassicUIDB.lastProbe = nil
+  ForeverClassicUIDB.lastGeom = nil
   ns.db = ForeverClassicUIDB.profile
   local getMeta = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
   if getMeta then
@@ -196,6 +204,9 @@ end
 
 local function OnPlayerLogin()
   ns.ApplySkins()
+  if ns.RefreshEditModeOptions then
+    ns.RefreshEditModeOptions()
+  end
   ns.Print("Loaded.", "Open HUD Edit Mode or /fcui options for Classic UI toggles.")
 end
 
@@ -249,7 +260,6 @@ SlashCmdList.FOREVERCLASSICUI = function(msg)
   if msg == "" or msg == "help" then
     ns.Print("Commands:")
     print("  /fcui options   - HUD Edit Mode Classic UI checkboxes")
-    print("  /fcui probe     - dump Forever frame names and texture availability")
     print("  /fcui status    - show detected layout and applied skins")
     print("  /fcui debug     - toggle debug chat")
     print("  /fcui reset     - restore default settings")
@@ -266,13 +276,6 @@ SlashCmdList.FOREVERCLASSICUI = function(msg)
     return
   end
 
-  if msg == "probe" then
-    if ns.RunProbe then
-      ns.RunProbe(true)
-    end
-    return
-  end
-
   if msg == "status" then
     ns.Print("Layout:", ns.layout or "unknown")
     for name in pairs(ns.Skins) do
@@ -284,6 +287,9 @@ SlashCmdList.FOREVERCLASSICUI = function(msg)
   end
 
   if msg == "debug" then
+    if not ns.db then
+      return
+    end
     ns.db.debug = not ns.db.debug
     ns.Print("Debug", ns.db.debug and "on" or "off")
     return

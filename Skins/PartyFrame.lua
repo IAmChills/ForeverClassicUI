@@ -2,6 +2,28 @@ local _, ns = ...
 
 local hookedArt = {}
 
+local function ForEachPartyMember(callback)
+  if not PartyFrame then
+    return
+  end
+  local seen = {}
+  if PartyFrame.PartyMemberFramePool and PartyFrame.PartyMemberFramePool.EnumerateActive then
+    for frame in PartyFrame.PartyMemberFramePool:EnumerateActive() do
+      if frame and not seen[frame] then
+        seen[frame] = true
+        callback(frame)
+      end
+    end
+  end
+  for i = 1, 4 do
+    local frame = PartyFrame["MemberFrame" .. i]
+    if frame and not seen[frame] then
+      seen[frame] = true
+      callback(frame)
+    end
+  end
+end
+
 local function SkinMember(frame)
   if not frame then
     return
@@ -10,27 +32,71 @@ local function SkinMember(frame)
     return
   end
 
-  local texture = frame.Texture or frame.texture or ns.GetPath(frame, "Texture")
+  local layout = ns.Layout.Party
+  local function partyOn()
+    return ns.db and ns.db.partyFrames and true or false
+  end
+
+  local texture = frame.Texture or frame.texture
+  ns.SilenceNativeChrome(texture, partyOn)
+  ns.SilenceNativeChrome(frame.Flash, partyOn)
+  ns.Hide(frame.VehicleTexture)
+
+  ns.PlaceClassicUnitBackground(frame, frame, layout)
+
+  local chrome = ns.EnsureUnitChrome(frame, "fcuiChrome")
+  -- Classic UI-PartyFrame is 128x64; Forever atlas collapse leaves it tiny.
+  ns.PlaceClassicChrome(chrome, frame, layout, ns.ResolveArt("PartyFrame"))
+  if chrome then
+    ns.Show(chrome)
+  end
   if texture then
-    ns.SetTexture(texture, ns.ResolveArt("PartyFrame"))
+    ns.HookChromeReset(texture, function()
+      SkinMember(frame)
+    end, partyOn)
   end
 
-  local health = frame.HealthBar
-    or frame.healthbar
-    or ns.GetPath(frame, "HealthBar")
-    or ns.GetPath(frame, "HealthBarContainer.HealthBar")
-    or ns.GetPath(frame, "HealthBarsContainer.HealthBar")
-  local mana = frame.ManaBar or frame.manabar or ns.GetPath(frame, "ManaBar")
-  ns.SetStatusBarClassic(health)
-  ns.SetStatusBarClassic(mana)
+  ns.PlaceClassicPortrait(frame.Portrait, frame.PortraitMask, frame, layout)
 
-  local mask = frame.PortraitMask
-  if mask then
-    ns.SetTexture(mask, ns.ResolveArt("PortraitMask"))
+  local healthBox = frame.HealthBarContainer
+  local health = (healthBox and healthBox.HealthBar) or frame.HealthBar
+  local mana = frame.ManaBar
+  ns.HideBarMasks(health)
+  ns.HideBarMasks(mana)
+  if healthBox and layout.health then
+    local point, x, y = unpack(layout.health.point)
+    x, y = ns.LayoutXY(layout, x, y)
+    local w, h = unpack(layout.health.size)
+    ns.PlaceUnitSlot(healthBox, frame, point, point, x, y, w, h)
+    if health then
+      ns.PlaceUnitSlot(health, healthBox, "TOPLEFT", "TOPLEFT", 0, 0, w, h)
+    end
+  elseif health and layout.health then
+    local point, x, y = unpack(layout.health.point)
+    x, y = ns.LayoutXY(layout, x, y)
+    local w, h = unpack(layout.health.size)
+    ns.PlaceUnitSlot(health, frame, point, point, x, y, w, h)
+  end
+  if mana and layout.mana then
+    local point, x, y = unpack(layout.mana.point)
+    x, y = ns.LayoutXY(layout, x, y)
+    local w, h = unpack(layout.mana.size)
+    ns.PlaceUnitSlot(mana, frame, point, point, x, y, w, h)
   end
 
+  if frame.Name and layout.name then
+    local point, x, y = unpack(layout.name.point)
+    x, y = ns.LayoutXY(layout, x, y)
+    ns.PlaceOn(frame.Name, frame, point, "TOPLEFT", x, y, layout.name.width, 12)
+  end
+
+  local flash = ns.EnsureUnitChrome(frame, "fcuiFlash")
+  ns.PlaceClassicFlash(flash, frame, layout, ns.ResolveArt("PartyFlash"))
+  ns.SyncOverlayShown(frame.Flash, flash, partyOn)
   if frame.Flash then
-    ns.SetTexture(frame.Flash, ns.ResolveArt("PartyFlash"))
+    ns.HookChromeReset(frame.Flash, function()
+      SkinMember(frame)
+    end, partyOn)
   end
 
   if not hookedArt[frame] then
@@ -51,12 +117,17 @@ local function SkinMember(frame)
 end
 
 local function Apply()
-  if not PartyFrame or not PartyFrame.MemberFrame1 then
-    ns.compat.party = "PartyFrame.MemberFrame1 missing."
+  if not PartyFrame then
+    ns.compat.party = "PartyFrame missing."
     return
   end
-  for i = 1, 4 do
-    SkinMember(PartyFrame["MemberFrame" .. i])
+  local any
+  ForEachPartyMember(function(frame)
+    any = true
+    SkinMember(frame)
+  end)
+  if not any then
+    ns.compat.party = "No party member frames yet."
   end
 end
 

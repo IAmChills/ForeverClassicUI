@@ -13,27 +13,34 @@ local function ApplyClassicButton(button, upKey, downKey)
   end
 end
 
-local function SkinForeverCompass(compass)
-  local texCoord = ns.Layout.Minimap.borderTexCoord
-  ns.SetTextureKeepSize(compass, ns.ResolveArt("MinimapBorder"), texCoord)
-  if compass.SetAlpha then
-    pcall(compass.SetAlpha, compass, 1)
+local function EnsureClassicBorder()
+  local border = ns._classicMinimapBorder
+  if border then
+    return border
   end
-  ns.Show(compass)
+  if not Minimap or not Minimap.CreateTexture then
+    return nil
+  end
+  border = Minimap:CreateTexture(nil, "OVERLAY", nil, 7)
+  ns._classicMinimapBorder = border
+  return border
+end
 
-  if not ns._minimapAtlasHooked then
-    ns._minimapAtlasHooked = true
-    hooksecurefunc(compass, "SetAtlas", function(self)
-      local ok, err = pcall(function()
-        if ns.db and ns.db.minimap then
-          ns.SetTextureKeepSize(self, ns.ResolveArt("MinimapBorder"), texCoord)
-        end
-      end)
-      if not ok then
-        ns.Debug("minimap SetAtlas hook:", err)
-        ns.QueueReconcile()
-      end
-    end)
+local function HideForeverCompass()
+  local function minimapOn()
+    return ns.db and ns.db.minimap and true or false
+  end
+  local compass = _G.MinimapCompassTexture
+  if compass then
+    ns.SilenceNativeChrome(compass, minimapOn)
+  end
+  local underlay = _G.MinimapCompassTextureUnderlay
+  if underlay then
+    ns.SilenceNativeChrome(underlay, minimapOn)
+  end
+  local backdrop = _G.MinimapBackdrop
+  if backdrop and backdrop.StaticOverlayTexture then
+    ns.SilenceNativeChrome(backdrop.StaticOverlayTexture, minimapOn)
   end
 end
 
@@ -44,14 +51,15 @@ local function Apply()
     return
   end
 
-  local compass = _G.MinimapCompassTexture
-  if compass then
-    SkinForeverCompass(compass)
-  else
-    ns.compat.minimap = "MinimapCompassTexture missing."
-  end
+  HideForeverCompass()
 
-  ns.Hide(_G.MinimapCompassTextureUnderlay)
+  local border = EnsureClassicBorder()
+  if not border then
+    ns.compat.minimap = "Could not create Classic minimap border."
+    return
+  end
+  ns.PlaceMinimapBorder(border, Minimap)
+  ns.Show(border)
 
   local zoomIn = _G.MinimapZoomIn
     or ns.GetPath(MinimapCluster, "MinimapContainer.Minimap.ZoomIn")

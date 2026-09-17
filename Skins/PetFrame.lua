@@ -18,11 +18,6 @@ local function Apply()
     ns.SetTexture(texture, ns.ResolveArt("SmallTarget"))
   end
 
-  local health = pet.HealthBar or pet.healthbar or _G.PetFrameHealthBar
-  local mana = pet.ManaBar or pet.manabar or _G.PetFrameManaBar
-  ns.SetStatusBarClassic(health)
-  ns.SetStatusBarClassic(mana)
-
   local mask = pet.PortraitMask or pet.portraitMask
   if mask then
     ns.SetTexture(mask, ns.ResolveArt("PortraitMask"))
@@ -36,7 +31,7 @@ local function Apply()
 
   if not hookedShow then
     hookedShow = true
-    pcall(pet.HookScript, pet, "OnShow", function()
+    ns.SafeHook(pet, "OnShow", function()
       if ns.db and ns.db.petFrame then
         Apply()
       end

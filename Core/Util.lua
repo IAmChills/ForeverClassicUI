@@ -33,25 +33,81 @@ ns.Art = {
   TargetMinusFlash = "Interface\\TargetingFrame\\UI-TargetingFrame-Minus-Flash",
   PlayerStatus = "Interface\\CharacterFrame\\UI-Player-Status",
   PartyFlash = "Interface\\TargetingFrame\\UI-PartyFrame-Flash",
+  NameBackground = "Interface\\TargetingFrame\\UI-TargetingFrame-LevelBackground",
 }
 
 ns.Layout = {
+  -- Classic Era XML slots are absolute on the unit frame.
+  -- nudge = {x,y} shifts the whole Classic assembly (chrome + children).
+  -- texturePoint = Classic chrome anchor before nudge is applied.
   Player = {
     size = { 232, 100 },
-    texturePoint = { "TOPLEFT", -19, -8 },
+    nudge = { -20, -5 },
+    texturePoint = { "TOPLEFT", 0, 0 },
     textureSize = { 232, 100 },
-    -- Mirrored vs the target frame sheet.
     texCoord = { 1, 0.09375, 0, 0.78125 },
-    portrait = { size = 64, point = { "TOPLEFT", 27, -17 } },
-    flashTexCoord = { 1, 0.09375, 0, 0.181640625 },
+    portrait = { size = 64, point = { "TOPLEFT", 42, -12 } },
+    flash = { size = { 242, 93 }, point = { "TOPLEFT", 13, 0 } },
+    flashTexCoord = { 0.9453125, 0, 0, 0.181640625 },
+    name = { width = 100, point = { "CENTER", 50, 19 } },
+    -- Classic PlayerFrameBackground: dark plate behind name + bars.
+    background = { size = { 119, 41 }, point = { "TOPLEFT", 106, -22 }, color = { 0, 0, 0, 0.5 } },
+    level = { point = { "CENTER", -61, -16 } },
+    health = { size = { 119, 12 }, point = { "TOPLEFT", 106, -41 } },
+    mana = { size = { 119, 12 }, point = { "TOPLEFT", 106, -52 } },
+    pvp = { point = { "TOPLEFT", 18, -20 } },
+    leader = { point = { "TOPLEFT", 44, -10 } },
+    group = { point = { "BOTTOMLEFT", "TOPLEFT", 97, -20 } },
+    status = { size = { 190, 66 }, point = { "TOPLEFT", 35, -8 }, texCoord = { 0, 0.74609375, 0, 0.53125 } },
   },
   Target = {
     size = { 232, 100 },
-    texturePoint = { "TOPLEFT", 20, -8 },
+    nudge = { 20, -5 },
+    texturePoint = { "TOPLEFT", 0, 0 },
     textureSize = { 232, 100 },
     texCoord = { 0.09375, 1, 0, 0.78125 },
-    portrait = { size = 64, point = { "TOPRIGHT", -21, -17 } },
+    portrait = { size = 64, point = { "TOPRIGHT", -42, -12 } },
+    flash = { size = { 242, 93 }, point = { "TOPLEFT", -13, 0 } },
     flashTexCoord = { 0.09375, 1, 0, 0.181640625 },
+    name = { width = 100, point = { "CENTER", -50, 19 } },
+    -- Classic TargetFrame Background + NameBackground (faction strip).
+    background = { size = { 119, 41 }, point = { "TOPRIGHT", -106, -22 }, color = { 0, 0, 0, 0.5 } },
+    nameBackground = { size = { 119, 19 }, point = { "TOPRIGHT", -106, -22 } },
+    level = { point = { "CENTER", 63, -16 } },
+    health = { size = { 119, 12 }, point = { "TOPRIGHT", -106, -41 } },
+    mana = { size = { 119, 12 }, point = { "TOPRIGHT", -106, -52 } },
+    minusHealth = { size = { 119, 9 }, point = { "TOPRIGHT", -106, -41 } },
+  },
+  ToT = {
+    -- Forever ToT is 120x49 (Classic was 93x45). Stretch Classic art to live size
+    -- so the chrome ring matches Forever's larger portrait.
+    size = { 120, 49 },
+    texturePoint = { "TOPLEFT", 0, 0 },
+    textureSize = { 120, 49 },
+    texCoord = { 0.015625, 0.7265625, 0, 0.703125 },
+    portrait = { size = 37, point = { "TOPLEFT", 5, -5 } },
+    background = { size = { 70, 18 }, point = { "BOTTOMLEFT", 42, 13 }, color = { 0, 0, 0, 0.5 } },
+    health = { size = { 70, 10 }, point = { "TOPRIGHT", -6, -15 } },
+    mana = { size = { 74, 7 }, point = { "TOPLEFT", 42, -26 } },
+    name = { width = 68, point = { "TOPLEFT", 44, -5 } },
+  },
+  Pet = {
+    portrait = { size = 32, point = { "TOPLEFT", 7, -6 } },
+    health = { size = { 69, 8 }, point = { "TOPLEFT", 47, -22 } },
+    mana = { size = { 69, 8 }, point = { "TOPLEFT", 47, -29 } },
+  },
+  Party = {
+    -- Forever member is 120x53; Classic chrome is 128x64. Use Classic chrome size
+    -- so the ring matches the 37px portrait (bare SetTexture collapses it).
+    size = { 120, 53 },
+    texturePoint = { "TOPLEFT", 0, -2 },
+    textureSize = { 128, 64 },
+    portrait = { size = 37, point = { "TOPLEFT", 7, -6 } },
+    background = { size = { 72, 20 }, point = { "TOPLEFT", 45, -11 }, color = { 0, 0, 0, 0.5 } },
+    flash = { size = { 128, 64 }, point = { "TOPLEFT", -3, 2 } },
+    health = { size = { 70, 8 }, point = { "TOPLEFT", 47, -12 } },
+    mana = { size = { 70, 8 }, point = { "TOPLEFT", 47, -21 } },
+    name = { width = 57, point = { "TOPLEFT", 46, -5 } },
   },
   CastBar = {
     playerSize = { 195, 13 },
@@ -59,11 +115,14 @@ ns.Layout = {
     borderPoint = { "TOP", 0, 28 },
   },
   Minimap = {
-    -- Square ring slice of UI-Minimap-Border. The top strip is MinimapBorderTop.
-    borderTexCoord = { 0.25, 1, 0.125, 0.875 },
+    -- Classic Vanilla Minimap.xml: 140 map, 192 backdrop/border cell.
+    classicMap = 140,
+    classicBorder = 192,
+    -- Classic compass ring used a -2 x nudge; live art also sits high/right.
+    borderOffset = { -12, -34 },
+    texCoord = { 0.25, 1, 0.125, 0.875 },
   },
 }
-
 function ns.Media(relativePath)
   return ns.MEDIA_ROOT .. relativePath:gsub("/", "\\")
 end
@@ -247,8 +306,425 @@ function ns.DetectLayout()
   return "missing"
 end
 
+function ns.PublicNumber(value, fallback)
+  if type(value) ~= "number" then
+    return fallback
+  end
+  if type(issecretvalue) == "function" and issecretvalue(value) then
+    return fallback
+  end
+  return value
+end
+
+function ns.RelativeTopLeft(region, root)
+  if not region or not root or not region.GetLeft or not root.GetLeft then
+    return
+  end
+  local okL, left = pcall(region.GetLeft, region)
+  local okT, top = pcall(region.GetTop, region)
+  local okRL, rootLeft = pcall(root.GetLeft, root)
+  local okRT, rootTop = pcall(root.GetTop, root)
+  left = okL and ns.PublicNumber(left)
+  top = okT and ns.PublicNumber(top)
+  rootLeft = okRL and ns.PublicNumber(rootLeft)
+  rootTop = okRT and ns.PublicNumber(rootTop)
+  if left and top and rootLeft and rootTop then
+    return left - rootLeft, top - rootTop
+  end
+end
+
+function ns.InheritBarBox(barBox, root, fallback)
+  local x, y, w, h = unpack(fallback)
+  if not barBox then
+    return x, y, w, h
+  end
+  if barBox.GetWidth then
+    local ok, width = pcall(barBox.GetWidth, barBox)
+    if ok then
+      w = ns.PublicNumber(width, w)
+    end
+  end
+  if barBox.GetHeight then
+    local ok, height = pcall(barBox.GetHeight, barBox)
+    if ok then
+      local liveH = ns.PublicNumber(height)
+      if liveH and h then
+        -- Health box is only the top bar; keep the XML stack height unless live is larger.
+        if liveH > h then
+          h = liveH
+        end
+      end
+    end
+  end
+  local rx, ry = ns.RelativeTopLeft(barBox, root)
+  if rx then
+    return rx, ry, w, h
+  end
+  if not barBox.GetPoint then
+    return x, y, w, h
+  end
+  local ok, point, _, relativePoint, px, py = pcall(barBox.GetPoint, barBox, 1)
+  if not ok or type(point) ~= "string" then
+    return x, y, w, h
+  end
+  px = ns.PublicNumber(px)
+  py = ns.PublicNumber(py)
+  if px == nil or py == nil then
+    return x, y, w, h
+  end
+  if point == "TOPLEFT" then
+    return px, py, w, h
+  end
+  if point == "BOTTOMRIGHT" and relativePoint == "LEFT" and root and root.GetHeight then
+    local okH, rootH = pcall(root.GetHeight, root)
+    local okBH, boxH = pcall(barBox.GetHeight, barBox)
+    rootH = (okH and ns.PublicNumber(rootH)) or 100
+    boxH = (okBH and ns.PublicNumber(boxH)) or 20
+    local bottomRightY = (-rootH / 2) + py
+    return px - w, bottomRightY + boxH, w, h
+  end
+  return x, y, w, h
+end
+
+function ns.EnsureUnitChrome(parent, key, sublevel)
+  if not parent or not parent.CreateTexture then
+    return nil
+  end
+  key = key or "fcuiChrome"
+  local tex = parent[key]
+  if tex then
+    return tex
+  end
+  tex = parent:CreateTexture(nil, "BACKGROUND", nil, sublevel or 3)
+  parent[key] = tex
+  if tex.Hide then
+    tex:Hide()
+  end
+  return tex
+end
+
+-- Classic PlayerFrameBackground / TargetFrame Background: solid dark plate
+-- behind the name and status bars (chrome art is transparent there).
+-- nudge = {x,y} shifts the whole Classic assembly. texturePoint is the Classic
+-- chrome anchor on the frame before that nudge (e.g. party chrome at 0,-2).
+function ns.ChromeOffset(layout)
+  local n = layout and layout.nudge
+  if type(n) == "table" then
+    return n[1] or 0, n[2] or 0
+  end
+  return 0, 0
+end
+
+function ns.LayoutXY(layout, x, y)
+  local ox, oy = ns.ChromeOffset(layout)
+  return (x or 0) + ox, (y or 0) + oy
+end
+
+function ns.PlaceClassicUnitBackground(parent, root, layout)
+  if not parent or not root or not layout or not layout.background then
+    return nil
+  end
+  local spec = layout.background
+  local bg = ns.EnsureUnitChrome(parent, "fcuiBackground", 1)
+  if not bg then
+    return nil
+  end
+  local point, x, y = unpack(spec.point)
+  x, y = ns.LayoutXY(layout, x, y)
+  local w, h = unpack(spec.size)
+  local r, g, b, a = unpack(spec.color or { 0, 0, 0, 0.5 })
+  ns._chromeSkinning = true
+  if bg.SetColorTexture then
+    pcall(bg.SetColorTexture, bg, r, g, b, a)
+  elseif bg.SetTexture then
+    pcall(bg.SetTexture, bg, "Interface\\Buttons\\WHITE8X8")
+    if bg.SetVertexColor then
+      pcall(bg.SetVertexColor, bg, r, g, b, a)
+    end
+  end
+  ns.PlaceOn(bg, root, point, point, x, y, w, h)
+  ns.Show(bg)
+  ns._chromeSkinning = false
+  return bg
+end
+
+-- Classic TargetFrame NameBackground (faction-colored strip over the dark plate).
+function ns.PlaceClassicNameBackground(texture, root, layout)
+  if not texture or not root or not layout or not layout.nameBackground then
+    return
+  end
+  local spec = layout.nameBackground
+  local point, x, y = unpack(spec.point)
+  x, y = ns.LayoutXY(layout, x, y)
+  local w, h = unpack(spec.size)
+  ns._chromeSkinning = true
+  ns.SetTexture(texture, ns.ResolveArt("NameBackground"))
+  ns.PlaceOn(texture, root, point, point, x, y, w, h)
+  ns.Show(texture)
+  ns._chromeSkinning = false
+end
+
+function ns.SyncOverlayShown(native, overlay, isEnabled)
+  if not overlay then
+    return
+  end
+  local shown = native and native.IsShown and native:IsShown()
+  if shown then
+    ns.Show(overlay)
+  else
+    ns.Hide(overlay)
+  end
+  if not native or native.fcuiShownHooked then
+    return
+  end
+  native.fcuiShownHooked = true
+  if native.Show then
+    hooksecurefunc(native, "Show", function()
+      if overlay and (not isEnabled or isEnabled()) then
+        ns.Show(overlay)
+      end
+    end)
+  end
+  if native.Hide then
+    hooksecurefunc(native, "Hide", function()
+      if overlay then
+        ns.Hide(overlay)
+      end
+    end)
+  end
+end
+
+function ns.SilenceNativeChrome(texture, isEnabled)
+  if not texture then
+    return
+  end
+  ns.Capture(texture)
+  texture.fcuiSilenceEnabled = isEnabled
+  if texture.SetAlpha then
+    pcall(texture.SetAlpha, texture, 0)
+  end
+  if texture.Hide then
+    pcall(texture.Hide, texture)
+  end
+  if texture.fcuiSilenceHooked then
+    return
+  end
+  texture.fcuiSilenceHooked = true
+  local function silence(self)
+    if ns._chromeSkinning or self.fcuiSilencing then
+      return
+    end
+    if self.fcuiSilenceEnabled and not self.fcuiSilenceEnabled() then
+      return
+    end
+    self.fcuiSilencing = true
+    if self.SetAlpha then
+      pcall(self.SetAlpha, self, 0)
+    end
+    if self.Hide then
+      pcall(self.Hide, self)
+    end
+    self.fcuiSilencing = nil
+  end
+  if type(texture.SetAtlas) == "function" then
+    hooksecurefunc(texture, "SetAtlas", silence)
+  end
+  if type(texture.SetShown) == "function" then
+    hooksecurefunc(texture, "SetShown", function(self, shown)
+      if shown then
+        silence(self)
+      end
+    end)
+  end
+end
+
+-- Classic Era XML placement: exact size/point/texCoord from Blizzard Classic frames.
+-- Does not move Forever StatusBars (secret values).
+function ns.PlaceClassicChrome(texture, root, layout, art, _unused, texCoord)
+  if not texture or not root or not layout then
+    return
+  end
+  local point, x, y = unpack(layout.texturePoint)
+  x, y = ns.LayoutXY(layout, x, y)
+  local w, h = unpack(layout.textureSize)
+  ns._chromeSkinning = true
+  ns.CaptureFlags(texture, { "useAtlasSize" })
+  texture.useAtlasSize = false
+  ns.SetTexture(texture, art or ns.ResolveArt("PlayerFrame"))
+  local coord = texCoord or layout.texCoord
+  if coord then
+    ns.SetTexCoord(texture, unpack(coord))
+  end
+  ns.PlaceOn(texture, root, point, "TOPLEFT", x, y, w, h)
+  ns._chromeSkinning = false
+end
+
+function ns.PlaceClassicFlash(texture, root, layout, art, texCoord)
+  if not texture or not root or not layout or not layout.flash then
+    return
+  end
+  local point, x, y = unpack(layout.flash.point)
+  x, y = ns.LayoutXY(layout, x, y)
+  local w, h = unpack(layout.flash.size)
+  ns._chromeSkinning = true
+  ns.CaptureFlags(texture, { "useAtlasSize" })
+  texture.useAtlasSize = false
+  ns.SetTexture(texture, art or ns.ResolveArt("FrameFlash"))
+  local coord = texCoord or layout.flashTexCoord
+  if coord then
+    ns.SetTexCoord(texture, unpack(coord))
+  end
+  ns.PlaceOn(texture, root, point, "TOPLEFT", x, y, w, h)
+  ns._chromeSkinning = false
+end
+
+function ns.PlaceClassicPortrait(portrait, mask, root, layout)
+  if not root or not layout or not layout.portrait then
+    return
+  end
+  local size = layout.portrait.size
+  local point, x, y = unpack(layout.portrait.point)
+  x, y = ns.LayoutXY(layout, x, y)
+  if portrait then
+    ns.PlaceOn(portrait, root, point, point, x, y, size, size)
+  end
+  if mask then
+    ns.SetTexture(mask, ns.ResolveArt("PortraitMask"))
+    ns.PlaceOn(mask, root, point, point, x, y, size, size)
+  end
+end
+
+function ns.PlaceClassicName(fontString, root, layout)
+  if not fontString or not root or not layout or not layout.name then
+    return
+  end
+  local point, x, y = unpack(layout.name.point)
+  x, y = ns.LayoutXY(layout, x, y)
+  ns.PlaceOn(fontString, root, point, "CENTER", x, y, layout.name.width, 12)
+end
+
+function ns.PlaceClassicLevel(fontString, root, layout)
+  if not fontString or not root or not layout or not layout.level then
+    return
+  end
+  local point, x, y = unpack(layout.level.point)
+  x, y = ns.LayoutXY(layout, x, y)
+  ns.PlaceOn(fontString, root, point, "CENTER", x, y)
+end
+
+function ns.PlaceClassicBars(root, layout, healthBox, manaBar)
+  if not root or not layout then
+    return
+  end
+  local health = layout.health
+  if healthBox and health then
+    local point, x, y = unpack(health.point)
+    x, y = ns.LayoutXY(layout, x, y)
+    local w, h = unpack(health.size)
+    ns.PlaceUnitSlot(healthBox, root, point, point, x, y, w, h)
+    -- Forever sizes the fill bar independently of the container.
+    if healthBox.HealthBar then
+      ns.PlaceUnitSlot(healthBox.HealthBar, healthBox, "TOPLEFT", "TOPLEFT", 0, 0, w, h)
+    end
+  end
+  local mana = layout.mana
+  if manaBar and mana then
+    local point, x, y = unpack(mana.point)
+    x, y = ns.LayoutXY(layout, x, y)
+    local w, h = unpack(mana.size)
+    -- Forever target mana is wider (134); Classic slot is 119 — must set size or it hangs left.
+    ns.PlaceUnitSlot(manaBar, root, point, point, x, y, w, h)
+  end
+end
+function ns.HookChromeReset(texture, reapply, isEnabled)
+  if not texture or type(texture.SetAtlas) ~= "function" then
+    return
+  end
+  texture.fcuiChromeEnabled = isEnabled
+  if texture.fcuiChromeHooked then
+    return
+  end
+  texture.fcuiChromeHooked = true
+  hooksecurefunc(texture, "SetAtlas", function()
+    if ns._chromeSkinning or not reapply or texture.fcuiChromePending then
+      return
+    end
+    if texture.fcuiChromeEnabled and not texture.fcuiChromeEnabled() then
+      return
+    end
+    texture.fcuiChromePending = true
+    C_Timer.After(0, function()
+      texture.fcuiChromePending = nil
+      if ns._chromeSkinning then
+        return
+      end
+      if texture.fcuiChromeEnabled and not texture.fcuiChromeEnabled() then
+        return
+      end
+      if reapply then
+        reapply()
+      end
+    end)
+  end)
+end
+
+function ns.PlaceChromeLabel(fontString, root, texX, texY, scale, slot, width, height)
+  if not fontString or not root or not slot or not texX then
+    return
+  end
+  ns.PlaceOn(
+    fontString,
+    root,
+    "CENTER",
+    "TOPLEFT",
+    texX + slot[1] * scale,
+    texY + slot[2] * scale,
+    width,
+    height
+  )
+end
+
+function ns.RaiseAbove(frame, other)
+  if not frame or not other or not frame.SetFrameLevel then
+    return
+  end
+  ns.Capture(frame)
+  local ok, level = pcall(other.GetFrameLevel, other)
+  level = ok and ns.PublicNumber(level)
+  if not level then
+    return
+  end
+  if ns.CanLayout and not ns.CanLayout(frame) then
+    ns.QueueReconcile()
+    return
+  end
+  pcall(frame.SetFrameLevel, frame, level + 4)
+end
+
+function ns.PlaceMinimapBorder(border, map)
+  local layout = ns.Layout.Minimap
+  local mapSize = layout.classicMap
+  if map and map.GetWidth then
+    local ok, w = pcall(map.GetWidth, map)
+    if ok then
+      mapSize = ns.PublicNumber(w, mapSize)
+    end
+  end
+  local borderSize = mapSize * (layout.classicBorder / layout.classicMap)
+  local ox, oy = 0, 0
+  if layout.borderOffset then
+    ox, oy = unpack(layout.borderOffset)
+  end
+  ns.SetTexture(border, ns.ResolveArt("MinimapBorder"))
+  ns.SetTexCoord(border, unpack(layout.texCoord))
+  ns.SetDrawLayer(border, "OVERLAY", 7)
+  if border.SetParent and map then
+    pcall(border.SetParent, border, map)
+  end
+  ns.PlaceOn(border, map or border, "CENTER", "CENTER", ox, oy, borderSize, borderSize)
+end
 function ns.SetStatusBarClassic(bar)
-  if not bar then
+  if not bar or (ns.TouchesSecretBars and ns.TouchesSecretBars(bar)) then
     return
   end
   local texture = ns.ResolveArt("StatusBar")
@@ -261,7 +737,10 @@ function ns.SetStatusBarClassic(bar)
     end
     pcall(bar.Spark.SetAlpha, bar.Spark, 0)
   end
-  ns.HideBarMasks(bar)
+end
+
+function ns.LayoutStatusBar()
+  -- Unit status bars cannot be moved or retextured without tainting Forever secret values.
 end
 
 function ns.ClassicPvpArt(unit)

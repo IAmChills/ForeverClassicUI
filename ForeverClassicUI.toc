@@ -2,7 +2,7 @@
 ## Title: Forever Classic UI
 ## Notes: Restores Classic unit frames, cast bars, and HUD chrome in World of Warcraft Forever.
 ## Author: Chills
-## Version: 0.1.1
+## Version: 0.1.2
 ## SavedVariables: ForeverClassicUIDB
 ## Category: Unit Frames
 ## IconTexture: Interface\Icons\INV_Misc_Token_Boost_Generic
@@ -15,7 +15,6 @@ Core\Init.lua
 Core\Util.lua
 Core\Protect.lua
 Core\Config.lua
-Core\Probe.lua
 Core\EditMode.lua
 Core\LevelAlert.lua
 

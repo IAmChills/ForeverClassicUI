@@ -5,6 +5,22 @@ local function SkinPvp()
   local contextual = ns.GetPath(PlayerFrame, "PlayerFrameContent.PlayerFrameContentContextual")
   ns.SkinPvpIcon(main and main.PvpBackgroundIcon, "player")
   ns.SkinPvpIcon(contextual and contextual.PVPIcon, "player")
+  ns.Hide(main and main.PvpBackgroundCircle)
+end
+
+local function SkinOrnaments()
+  local contextual = ns.GetPath(PlayerFrame, "PlayerFrameContent.PlayerFrameContentContextual")
+  if not contextual then
+    return
+  end
+  ns.Hide(contextual.PlayerPortraitCornerIcon)
+  if contextual.LeaderIcon then
+    ns.SetTexture(contextual.LeaderIcon, ns.ResolveArt("LeaderIcon"))
+  end
+  local gi = contextual.GroupIndicator
+  if gi and gi.GroupIndicatorLeft then
+    ns.SetTexture(gi.GroupIndicatorLeft, ns.ResolveArt("GroupIndicator"))
+  end
 end
 
 local function SkinRetail10()
@@ -20,79 +36,69 @@ local function SkinRetail10()
     error("retail10 player frame paths missing")
   end
 
-  local art = ns.ResolveArt("PlayerFrame")
+  local function playerOn()
+    return ns.db and ns.db.playerFrame and true or false
+  end
+
+  -- Hide Forever retail chrome; place Classic art at Classic XML anchors.
+  ns.SilenceNativeChrome(container.FrameTexture, playerOn)
+  ns.Hide(container.AlternatePowerFrameTexture)
+  ns.SilenceNativeChrome(container.FrameFlash, playerOn)
+
+  -- Dark plate behind name/bars (Classic PlayerFrameBackground).
+  ns.PlaceClassicUnitBackground(container, PlayerFrame, layout)
+
+  local chrome = ns.EnsureUnitChrome(container, "fcuiChrome")
+  ns.PlaceClassicChrome(chrome, PlayerFrame, layout, ns.ResolveArt("PlayerFrame"))
+  if chrome then
+    ns.Show(chrome)
+  end
   if container.FrameTexture then
-    ns.SetTexture(container.FrameTexture, art)
-    ns.SetTexCoord(container.FrameTexture, unpack(layout.texCoord))
-    ns.SetSize(container.FrameTexture, unpack(layout.textureSize))
-    ns.ClearAllPoints(container.FrameTexture)
-    ns.SetPoint(container.FrameTexture, unpack(layout.texturePoint))
-    ns.SetDrawLayer(container.FrameTexture, "BORDER")
+    ns.HookChromeReset(container.FrameTexture, SkinRetail10, playerOn)
   end
 
-  if container.AlternatePowerFrameTexture then
-    ns.SetTexture(container.AlternatePowerFrameTexture, art)
-    ns.SetTexCoord(container.AlternatePowerFrameTexture, unpack(layout.texCoord))
-  end
+  ns.PlaceClassicPortrait(container.PlayerPortrait, container.PlayerPortraitMask, PlayerFrame, layout)
 
-  local portrait = container.PlayerPortrait
-  if portrait then
-    ns.SetSize(portrait, layout.portrait.size, layout.portrait.size)
-    ns.ClearAllPoints(portrait)
-    ns.SetPoint(portrait, unpack(layout.portrait.point))
-  end
+  local healthBox = main.HealthBarsContainer
+  local manaBar = ns.GetPath(main, "ManaBarArea.ManaBar") or (main.ManaBarArea and main.ManaBarArea.ManaBar)
+  ns.PlaceClassicBars(PlayerFrame, layout, healthBox, manaBar)
 
-  local mask = container.PlayerPortraitMask
-  if mask then
-    ns.SetTexture(mask, ns.ResolveArt("PortraitMask"))
-    ns.SetSize(mask, layout.portrait.size, layout.portrait.size)
-    ns.ClearAllPoints(mask)
-    ns.SetPoint(mask, unpack(layout.portrait.point))
+  local flash = ns.EnsureUnitChrome(container, "fcuiFlash")
+  ns.PlaceClassicFlash(flash, PlayerFrame, layout, ns.ResolveArt("FrameFlash"))
+  ns.SyncOverlayShown(container.FrameFlash, flash, playerOn)
+  if container.FrameFlash then
+    ns.HookChromeReset(container.FrameFlash, SkinRetail10, playerOn)
   end
-
-  local health = ns.GetPath(main, "HealthBarsContainer.HealthBar")
-  local mana = ns.GetPath(main, "ManaBarArea.ManaBar")
-  ns.SetStatusBarClassic(health)
-  ns.SetStatusBarClassic(mana)
-  if health then
-    ns.Capture(health)
-    pcall(health.SetStatusBarColor, health, 0, 1, 0)
-  end
-
-  ns.SkinFlash(container.FrameFlash, layout.flashTexCoord)
 
   local status = main.StatusTexture
   if status then
     ns.SetTexture(status, ns.ResolveArt("PlayerStatus"))
-  end
-
-  -- Forever HUD circle; Classic draws the number on the frame itself.
-  ns.Hide(main.LevelBackgroundCircle)
-
-  if PlayerName then
-    ns.SetWidth(PlayerName, 100)
-    if PlayerName.SetJustifyH then
-      pcall(PlayerName.SetJustifyH, PlayerName, "CENTER")
+    if layout.status then
+      local point, x, y = unpack(layout.status.point)
+      x, y = ns.LayoutXY(layout, x, y)
+      local w, h = unpack(layout.status.size)
+      ns.PlaceOn(status, PlayerFrame, point, "TOPLEFT", x, y, w, h)
+      if layout.status.texCoord then
+        ns.SetTexCoord(status, unpack(layout.status.texCoord))
+      end
     end
-    ns.ClearAllPoints(PlayerName)
-    ns.SetPoint(PlayerName, "TOPLEFT", 97, -34)
   end
 
-  if PlayerLevelText then
-    ns.ClearAllPoints(PlayerLevelText)
-    ns.SetPoint(PlayerLevelText, "CENTER", PlayerFrame, "TOPLEFT", 51, -21)
-    ns.Show(PlayerLevelText)
-  end
+  ns.PlaceClassicName(_G.PlayerName, PlayerFrame, layout)
+  ns.Hide(main.LevelBackgroundCircle)
+  ns.PlaceClassicLevel(_G.PlayerLevelText, PlayerFrame, layout)
 
   SkinPvp()
+  SkinOrnaments()
 end
 
 local function SkinUnknown()
-  ns.compat.player = "PlayerFrame is missing PlayerFrameContainer. Run /fcui probe."
+  ns.compat.player = "PlayerFrame is missing PlayerFrameContainer."
   ns.Print(ns.compat.player)
 end
 
 local appliedHooks
+local pending
 
 local function Apply()
   if ns.DetectLayout() ~= "retail10" then
@@ -108,9 +114,16 @@ local function Apply()
   appliedHooks = true
 
   ns.SafeHook("PlayerFrame_ToPlayerArt", function()
-    if ns.db and ns.db.playerFrame then
-      Apply()
+    if not ns.db or not ns.db.playerFrame or pending then
+      return
     end
+    pending = true
+    C_Timer.After(0, function()
+      pending = nil
+      if ns.db and ns.db.playerFrame then
+        Apply()
+      end
+    end)
   end)
   ns.SafeHook("PlayerFrame_ToVehicleArt", function()
     -- Forever vehicle art stays. Classic player chrome is reapplied on exit.
@@ -129,14 +142,9 @@ local function Apply()
       SkinPvp()
     end
   end)
-  ns.SafeHook("PlayerFrame_UpdatePlayerNameTextAnchor", function()
-    if ns.db and ns.db.playerFrame and PlayerName and PlayerFrame.state ~= "vehicle" then
-      ns.SetWidth(PlayerName, 100)
-      if PlayerName.SetJustifyH then
-        pcall(PlayerName.SetJustifyH, PlayerName, "CENTER")
-      end
-      ns.ClearAllPoints(PlayerName)
-      ns.SetPoint(PlayerName, "TOPLEFT", 97, -34)
+  ns.SafeHook("PlayerFrame_UpdateRolesAssigned", function()
+    if ns.db and ns.db.playerFrame and PlayerFrame.state ~= "vehicle" then
+      SkinOrnaments()
     end
   end)
 end

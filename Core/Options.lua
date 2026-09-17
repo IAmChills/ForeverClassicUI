@@ -66,17 +66,9 @@ local function CreatePanel()
     MakeCheckbox(container, ns.OptionMeta[i], i)
   end
 
-  local probe = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
-  probe:SetSize(140, 24)
-  probe:SetPoint("BOTTOMLEFT", 16, 16)
-  probe:SetText("Run Probe")
-  probe:SetScript("OnClick", function()
-    ns.RunProbe(true)
-  end)
-
   local reload = CreateFrame("Button", nil, panel, "UIPanelButtonTemplate")
   reload:SetSize(140, 24)
-  reload:SetPoint("LEFT", probe, "RIGHT", 8, 0)
+  reload:SetPoint("BOTTOMLEFT", 16, 16)
   reload:SetText("Reload UI")
   reload:SetScript("OnClick", ReloadUI)
 

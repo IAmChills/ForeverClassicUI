@@ -45,7 +45,9 @@ end
 local function WireCallback(box, handler)
   if box.SetCallback then
     box:SetCallback(function(isChecked, isUserInput)
-      if isUserInput == false then
+      -- Blizzard refresh calls SetControlChecked without user input.
+      -- Only persist real clicks (isUserInput must be true).
+      if refreshingChecks or not isUserInput then
         return
       end
       handler(isChecked and true or false)
@@ -55,8 +57,11 @@ local function WireCallback(box, handler)
 
   local button = box.Button or box
   button:HookScript("OnClick", function(self)
+    if refreshingChecks then
+      return
+    end
     PlayCheckSound()
-    handler(self.GetChecked and self:GetChecked() or false)
+    handler(self.GetChecked and self:GetChecked() and true or false)
   end)
 end
 
@@ -139,10 +144,13 @@ local function CreateCheckbox(parent, option, layoutIndex)
   end
 
   WireCallback(box, function(isChecked)
+    if refreshingChecks then
+      return
+    end
     if ns.SetOption then
       ns.SetOption(option.key, isChecked)
     elseif ns.db then
-      ns.db[option.key] = isChecked
+      ns.db[option.key] = isChecked and true or false
     end
   end)
 

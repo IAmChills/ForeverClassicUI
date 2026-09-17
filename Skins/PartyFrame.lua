@@ -26,9 +26,8 @@ local function SkinMember(frame)
     mask:SetTexture(ns.ResolveArt("PortraitMask"))
   end
 
-  if ns.db.hideModernChrome then
-    ns.Hide(frame.Flash)
-    ns.Hide(frame.RoleIcon)
+  if frame.Flash and frame.Flash.SetTexture then
+    frame.Flash:SetTexture(ns.ResolveArt("PartyFlash"))
   end
 
   if not hookedArt[frame] then
@@ -49,24 +48,12 @@ local function SkinMember(frame)
 end
 
 local function Apply()
-  if PartyFrame and PartyFrame.MemberFrame1 then
-    for i = 1, 4 do
-      SkinMember(PartyFrame["MemberFrame" .. i])
-    end
+  if not PartyFrame or not PartyFrame.MemberFrame1 then
+    ns.compat.party = "PartyFrame.MemberFrame1 missing."
     return
   end
-
-  local found = false
   for i = 1, 4 do
-    local frame = _G["PartyMemberFrame" .. i]
-    if frame then
-      found = true
-      SkinMember(frame)
-    end
-  end
-
-  if not found then
-    ns.compat.party = "No party frames found. Forever may use a compact-only party UI."
+    SkinMember(PartyFrame["MemberFrame" .. i])
   end
 end
 

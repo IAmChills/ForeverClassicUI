@@ -26,6 +26,12 @@ ns.Art = {
   PortraitMask = "Interface\\CharacterFrame\\TempPortraitAlphaMask",
   GroupIndicator = "Interface\\CharacterFrame\\UI-CharacterFrame-GroupIndicator",
   LeaderIcon = "Interface\\GroupFrame\\UI-Group-LeaderIcon",
+  PvpAlliance = "Interface\\TargetingFrame\\UI-PVP-Alliance",
+  PvpHorde = "Interface\\TargetingFrame\\UI-PVP-Horde",
+  PvpFFA = "Interface\\TargetingFrame\\UI-PVP-FFA",
+  FrameFlash = "Interface\\TargetingFrame\\UI-TargetingFrame-Flash",
+  PlayerStatus = "Interface\\CharacterFrame\\UI-Player-Status",
+  PartyFlash = "Interface\\TargetingFrame\\UI-PartyFrame-Flash",
 }
 
 ns.Layout = {
@@ -36,6 +42,7 @@ ns.Layout = {
     -- Mirrored vs the target frame sheet.
     texCoord = { 1, 0.09375, 0, 0.78125 },
     portrait = { size = 64, point = { "TOPLEFT", 27, -17 } },
+    flashTexCoord = { 1, 0.09375, 0, 0.181640625 },
   },
   Target = {
     size = { 232, 100 },
@@ -43,11 +50,16 @@ ns.Layout = {
     textureSize = { 232, 100 },
     texCoord = { 0.09375, 1, 0, 0.78125 },
     portrait = { size = 64, point = { "TOPRIGHT", -21, -17 } },
+    flashTexCoord = { 0.09375, 1, 0, 0.181640625 },
   },
   CastBar = {
     playerSize = { 195, 13 },
     borderSize = { 256, 64 },
     borderPoint = { "TOP", 0, 28 },
+  },
+  Minimap = {
+    -- Square ring slice of UI-Minimap-Border. The top strip is MinimapBorderTop.
+    borderTexCoord = { 0.25, 1, 0.125, 0.875 },
   },
 }
 
@@ -110,6 +122,22 @@ function ns.FirstExisting(...)
   end
 end
 
+function ns.SetTextureKeepSize(region, path, texCoord)
+  if not region or not region.SetTexture then
+    return
+  end
+  local width, height = region:GetWidth(), region:GetHeight()
+  region:SetTexture(path)
+  if texCoord and region.SetTexCoord then
+    region:SetTexCoord(unpack(texCoord))
+  elseif region.SetTexCoord then
+    region:SetTexCoord(0, 1, 0, 1)
+  end
+  if width and height and width > 0 and height > 0 then
+    region:SetSize(width, height)
+  end
+end
+
 function ns.Hide(region)
   if not region then
     return
@@ -133,12 +161,13 @@ end
 
 function ns.SafeHook(target, method, handler)
   if type(target) == "string" then
-    if type(_G[target]) == "function" then
-      hooksecurefunc(target, handler)
+    local hookfn = type(method) == "function" and method or handler
+    if type(_G[target]) == "function" and type(hookfn) == "function" then
+      hooksecurefunc(target, hookfn)
     end
     return
   end
-  if target and type(target[method]) == "function" then
+  if target and type(method) == "string" and type(target[method]) == "function" and type(handler) == "function" then
     hooksecurefunc(target, method, handler)
   end
 end
@@ -205,12 +234,8 @@ function ns.HideBarMasks(bar)
 end
 
 function ns.DetectLayout()
-  -- PlayerFrameContainer is the retail-shaped HUD.
   if PlayerFrame and PlayerFrame.PlayerFrameContainer then
     return "retail10"
-  end
-  if _G.PlayerFrameTexture or (PlayerFrame and PlayerFrame.texture) then
-    return "classic"
   end
   if PlayerFrame then
     return "unknown-playerframe"
@@ -230,4 +255,43 @@ function ns.SetStatusBarClassic(bar)
     bar.Spark:SetAlpha(0)
   end
   ns.HideBarMasks(bar)
+end
+
+function ns.ClassicPvpArt(unit)
+  if not unit or not UnitExists(unit) then
+    return nil
+  end
+  if UnitIsPVPFreeForAll(unit) then
+    return ns.ResolveArt("PvpFFA")
+  end
+  if not UnitIsPVP(unit) then
+    return nil
+  end
+  local faction = UnitFactionGroup(unit)
+  if faction == "Alliance" then
+    return ns.ResolveArt("PvpAlliance")
+  end
+  if faction == "Horde" then
+    return ns.ResolveArt("PvpHorde")
+  end
+end
+
+function ns.SkinPvpIcon(icon, unit)
+  if not icon or not icon.SetTexture then
+    return
+  end
+  local art = ns.ClassicPvpArt(unit)
+  if art then
+    icon:SetTexture(art)
+  end
+end
+
+function ns.SkinFlash(flash, texCoord)
+  if not flash or not flash.SetTexture then
+    return
+  end
+  flash:SetTexture(ns.ResolveArt("FrameFlash"))
+  if texCoord and flash.SetTexCoord then
+    flash:SetTexCoord(unpack(texCoord))
+  end
 end

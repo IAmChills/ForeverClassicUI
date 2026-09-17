@@ -53,17 +53,19 @@ local function SkinPlayerBar(bar)
   end
 
   ApplyClassicCastFlag(bar)
-  if bar.SetLook then
-    bar:SetLook(bar.look or "CLASSIC")
-  else
+  if bar.Border then
     local layout = ns.Layout.CastBar
-    bar:SetSize(unpack(layout.playerSize))
-    if bar.Border then
-      bar.Border:SetTexture(ns.ResolveArt("CastBorder"))
-      bar.Border:SetSize(unpack(layout.borderSize))
-      bar.Border:ClearAllPoints()
-      bar.Border:SetPoint(unpack(layout.borderPoint))
-    end
+    bar.Border:SetTexture(ns.ResolveArt("CastBorder"))
+    bar.Border:SetSize(unpack(layout.borderSize))
+    bar.Border:ClearAllPoints()
+    bar.Border:SetPoint(unpack(layout.borderPoint))
+  end
+  if bar.BorderShield then
+    local layout = ns.Layout.CastBar
+    bar.BorderShield:SetTexture(ns.ResolveArt("CastShield"))
+    bar.BorderShield:SetSize(unpack(layout.borderSize))
+    bar.BorderShield:ClearAllPoints()
+    bar.BorderShield:SetPoint(unpack(layout.borderPoint))
   end
   ApplyClassicCastFlag(bar)
 
@@ -91,9 +93,7 @@ local function SkinUnitBar(bar)
   end
 
   ApplyClassicCastFlag(bar)
-  if bar.SetLook then
-    bar:SetLook(bar.look or "UNITFRAME")
-  elseif bar.Border then
+  if bar.Border then
     bar.Border:SetTexture(ns.ResolveArt("CastBorderSmall"))
   end
   ApplyClassicCastFlag(bar)
@@ -110,23 +110,19 @@ local function SkinUnitBar(bar)
 end
 
 local function Apply()
-  local playerBar = ns.FirstExisting("PlayerCastingBarFrame", "CastingBarFrame")
+  local playerBar = _G.PlayerCastingBarFrame
   if playerBar then
     SkinPlayerBar(playerBar)
   else
-    ns.compat.castbar = "No player cast bar global found."
+    ns.compat.castbar = "PlayerCastingBarFrame missing."
   end
 
   if TargetFrame and TargetFrame.spellbar then
     SkinUnitBar(TargetFrame.spellbar)
-  elseif _G.TargetFrameSpellBar then
-    SkinUnitBar(_G.TargetFrameSpellBar)
   end
 
   if FocusFrame and FocusFrame.spellbar then
     SkinUnitBar(FocusFrame.spellbar)
-  elseif _G.FocusFrameSpellBar then
-    SkinUnitBar(_G.FocusFrameSpellBar)
   end
 end
 

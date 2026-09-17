@@ -9,7 +9,6 @@ ns.Defaults = {
   castBars = false,
   minimap = false,
   hideLevelAlert = false,
-  hideModernChrome = true,
   debug = false,
 }
 
@@ -61,11 +60,6 @@ ns.OptionMeta = {
     help = "Hide the center banner when you level up. Raid warnings and other alerts still show.",
     editMode = true,
     live = true,
-  },
-  {
-    key = "hideModernChrome",
-    label = "Hide modern chrome",
-    help = "Hide role icons, prestige badges, rest loops, and similar Forever/retail decorations.",
   },
   {
     key = "debug",

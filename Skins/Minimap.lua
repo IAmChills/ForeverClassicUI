@@ -10,7 +10,24 @@ local function ApplyClassicButton(button, upKey, downKey)
   if button.SetPushedTexture then
     button:SetPushedTexture(ns.ResolveArt(downKey))
   end
-  button:Show()
+end
+
+local function SkinForeverCompass(compass)
+  local texCoord = ns.Layout.Minimap.borderTexCoord
+  ns.SetTextureKeepSize(compass, ns.ResolveArt("MinimapBorder"), texCoord)
+  compass:SetAlpha(1)
+  if compass.Show then
+    compass:Show()
+  end
+
+  if not ns._minimapAtlasHooked then
+    ns._minimapAtlasHooked = true
+    hooksecurefunc(compass, "SetAtlas", function(self)
+      if ns.db and ns.db.minimap then
+        ns.SetTextureKeepSize(self, ns.ResolveArt("MinimapBorder"), texCoord)
+      end
+    end)
+  end
 end
 
 local function Apply()
@@ -21,31 +38,13 @@ local function Apply()
   end
 
   local compass = _G.MinimapCompassTexture
-  local border = compass
-    or _G.MinimapBorder
-    or ns.GetPath(MinimapCluster, "MinimapContainer.Minimap.MinimapBorder")
-    or ns.GetPath(Minimap, "MinimapBorder")
-  if border and border.SetTexture then
-    border:SetTexture(ns.ResolveArt("MinimapBorder"))
-    if border.SetTexCoord then
-      border:SetTexCoord(0, 1, 0, 1)
-    end
-    border:SetAlpha(1)
-    if border.Show then
-      border:Show()
-    end
+  if compass then
+    SkinForeverCompass(compass)
+  else
+    ns.compat.minimap = "MinimapCompassTexture missing."
   end
 
   ns.Hide(_G.MinimapCompassTextureUnderlay)
-
-  if ns.db.hideModernChrome then
-    ns.Hide(_G.MinimapBorderTop)
-    ns.Hide(_G.MiniMapWorldMapButton)
-    ns.Hide(_G.ExpansionLandingPageMinimapButton)
-    ns.Hide(ns.GetPath(MinimapCluster, "BorderTop"))
-    ns.Hide(ns.GetPath(MinimapCluster, "ExpansionButton"))
-    ns.Hide(ns.GetPath(MinimapCluster, "ExpansionLandingPageMinimapButton"))
-  end
 
   local zoomIn = _G.MinimapZoomIn
     or ns.GetPath(MinimapCluster, "MinimapContainer.Minimap.ZoomIn")
@@ -55,18 +54,6 @@ local function Apply()
     or ns.GetPath(Minimap, "ZoomOut")
   ApplyClassicButton(zoomIn, "MinimapZoomInUp", "MinimapZoomInDown")
   ApplyClassicButton(zoomOut, "MinimapZoomOutUp", "MinimapZoomOutDown")
-
-  if compass and not ns._minimapAtlasHooked then
-    ns._minimapAtlasHooked = true
-    hooksecurefunc(compass, "SetAtlas", function(self)
-      if ns.db and ns.db.minimap then
-        self:SetTexture(ns.ResolveArt("MinimapBorder"))
-        if self.SetTexCoord then
-          self:SetTexCoord(0, 1, 0, 1)
-        end
-      end
-    end)
-  end
 end
 
 ns.RegisterSkin("minimap", Apply)

@@ -2,23 +2,14 @@ local _, ns = ...
 
 local hookedClassification = {}
 
-local function HideModernTargetChrome(frame)
-  if not frame or not ns.db.hideModernChrome then
+local function SkinTargetPvp(frame)
+  if not frame then
     return
   end
   local ctx = ns.GetPath(frame, "TargetFrameContent.TargetFrameContentContextual")
-  local main = ns.GetPath(frame, "TargetFrameContent.TargetFrameContentMain")
-  local container = frame.TargetFrameContainer
-  ns.Hide(ctx and ctx.PvpIcon)
-  ns.Hide(ctx and ctx.PrestigePortrait)
-  ns.Hide(ctx and ctx.PrestigeBadge)
-  ns.Hide(ctx and ctx.BossIcon)
-  ns.Hide(ctx and ctx.PvpBackgroundCircle)
-  ns.Hide(ctx and ctx.PvpBackgroundIcon)
-  ns.Hide(main and main.ReputationColor)
-  ns.Hide(main and main.LevelBackgroundCircle)
-  ns.Hide(container and container.Flash)
-  ns.Hide(container and container.BossPortraitFrameTexture)
+  local unit = frame.unit
+  ns.SkinPvpIcon(ctx and ctx.PvpBackgroundIcon, unit)
+  ns.SkinPvpIcon(ctx and ctx.PvpIcon, unit)
 end
 
 local function SkinRetailUnit(frame)
@@ -54,6 +45,9 @@ local function SkinRetailUnit(frame)
     container.FrameTexture:SetPoint(unpack(layout.texturePoint))
   end
 
+  -- Dragon is part of the Elite/Rare Classic frame files.
+  ns.Hide(container.BossPortraitFrameTexture)
+
   local portrait = container.Portrait
   if portrait then
     portrait:SetSize(layout.portrait.size, layout.portrait.size)
@@ -69,6 +63,8 @@ local function SkinRetailUnit(frame)
     health:SetStatusBarColor(0, 1, 0)
   end
 
+  ns.SkinFlash(container.Flash, layout.flashTexCoord)
+
   local name = main.Name
   if name then
     name:SetWidth(100)
@@ -77,13 +73,14 @@ local function SkinRetailUnit(frame)
     name:SetPoint("TOPLEFT", 37, -34)
   end
 
-  HideModernTargetChrome(frame)
   ns.Hide(main.LevelBackgroundCircle)
   if main.LevelText then
     main.LevelText:ClearAllPoints()
     main.LevelText:SetPoint("CENTER", frame, "TOPRIGHT", -51, -21)
     main.LevelText:Show()
   end
+
+  SkinTargetPvp(frame)
 
   local tot = frame.totFrame
   if tot then
@@ -104,39 +101,19 @@ local function SkinRetailUnit(frame)
       SkinRetailUnit(self)
     end)
     ns.SafeHook(frame, "CheckFaction", function(self)
-      if not ns.db or not ns.db.targetFrame then
-        return
+      if ns.db and ns.db.targetFrame then
+        SkinTargetPvp(self)
       end
-      HideModernTargetChrome(self)
     end)
   end
 
   return true
 end
 
-local function SkinClassicUnit(prefix)
-  local texture = _G[prefix .. "Texture"] or _G[prefix .. "TextureFrameTexture"]
-  if texture then
-    texture:SetTexture(ns.ResolveArt("TargetFrame"))
-  end
-  ns.SetStatusBarClassic(_G[prefix .. "HealthBar"])
-  ns.SetStatusBarClassic(_G[prefix .. "ManaBar"])
-  return texture ~= nil
-end
-
 local function Apply()
-  local layout = ns.DetectLayout()
-  local ok = false
-  if layout == "retail10" then
-    ok = SkinRetailUnit(TargetFrame)
-    if FocusFrame then
-      SkinRetailUnit(FocusFrame)
-    end
-  elseif layout == "classic" then
-    ok = SkinClassicUnit("TargetFrame")
-    if _G.FocusFrame then
-      SkinClassicUnit("FocusFrame")
-    end
+  local ok = SkinRetailUnit(TargetFrame)
+  if FocusFrame then
+    SkinRetailUnit(FocusFrame)
   end
 
   if not ok and TargetFrame then

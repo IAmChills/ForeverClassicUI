@@ -1,26 +1,17 @@
 local _, ns = ...
 
-local MODERN_CHROME = {
-  "PlayerFrameContent.PlayerFrameContentContextual.RoleIcon",
-  "PlayerFrameContent.PlayerFrameContentContextual.AttackIcon",
-  "PlayerFrameContent.PlayerFrameContentContextual.PlayerPortraitCornerIcon",
-  "PlayerFrameContent.PlayerFrameContentContextual.PrestigePortrait",
-  "PlayerFrameContent.PlayerFrameContentContextual.PrestigeBadge",
-  "PlayerFrameContent.PlayerFrameContentContextual.PVPIcon",
-  "PlayerFrameContent.PlayerFrameContentContextual.PlayerRestLoop",
-  "PlayerFrameContent.PlayerFrameContentMain.StatusTexture",
-  "PlayerFrameContent.PlayerFrameContentMain.LevelBackgroundCircle",
-  "PlayerFrameContent.PlayerFrameContentMain.PvpBackgroundCircle",
-  "PlayerFrameContent.PlayerFrameContentMain.PvpBackgroundIcon",
-  "PlayerFrameContainer.FrameFlash",
-}
+local function SkinPvp()
+  local main = ns.GetPath(PlayerFrame, "PlayerFrameContent.PlayerFrameContentMain")
+  local contextual = ns.GetPath(PlayerFrame, "PlayerFrameContent.PlayerFrameContentContextual")
+  ns.SkinPvpIcon(main and main.PvpBackgroundIcon, "player")
+  ns.SkinPvpIcon(contextual and contextual.PVPIcon, "player")
+end
 
 local function SkinRetail10()
   local layout = ns.Layout.Player
   local container = PlayerFrame.PlayerFrameContainer
   local content = PlayerFrame.PlayerFrameContent
   local main = content and content.PlayerFrameContentMain
-  local contextual = content and content.PlayerFrameContentContextual
   if not container or not main then
     error("retail10 player frame paths missing")
   end
@@ -63,7 +54,15 @@ local function SkinRetail10()
     health:SetStatusBarColor(0, 1, 0)
   end
 
-  ns.Hide(ns.GetPath(main, "LevelBackgroundCircle"))
+  ns.SkinFlash(container.FrameFlash, layout.flashTexCoord)
+
+  local status = main.StatusTexture
+  if status and status.SetTexture then
+    status:SetTexture(ns.ResolveArt("PlayerStatus"))
+  end
+
+  -- Forever HUD circle; Classic draws the number on the frame itself.
+  ns.Hide(main.LevelBackgroundCircle)
 
   if PlayerName then
     PlayerName:SetWidth(100)
@@ -72,49 +71,29 @@ local function SkinRetail10()
     PlayerName:SetPoint("TOPLEFT", 97, -34)
   end
 
-  if ns.db.hideModernChrome then
-    ns.HideTree(PlayerFrame, MODERN_CHROME)
-    ns.Hide(_G.PlayerPVPTimerText)
-    if contextual and contextual.PlayerRestLoop and contextual.PlayerRestLoop.PlayerRestLoopAnim then
-      contextual.PlayerRestLoop.PlayerRestLoopAnim:Stop()
-    end
-  end
-
-  -- Level number sits on the Classic frame, not in the HUD circle.
   if PlayerLevelText then
     PlayerLevelText:ClearAllPoints()
     PlayerLevelText:SetPoint("CENTER", PlayerFrame, "TOPLEFT", 51, -21)
     PlayerLevelText:Show()
   end
-end
 
-local function SkinClassic()
-  -- Frame is already Classic-shaped; only strip extra overlays.
-  if ns.db.hideModernChrome then
-    ns.Hide(_G.PlayerFrameGroupIndicatorLeft)
-    ns.Hide(_G.PlayerPVPIcon)
-  end
-  ns.SetStatusBarClassic(_G.PlayerFrameHealthBar)
-  ns.SetStatusBarClassic(_G.PlayerFrameManaBar)
+  SkinPvp()
 end
 
 local function SkinUnknown()
-  ns.compat.player = "PlayerFrame exists but neither retail10 nor classic paths matched. Run /fcui probe."
+  ns.compat.player = "PlayerFrame is missing PlayerFrameContainer. Run /fcui probe."
   ns.Print(ns.compat.player)
 end
 
 local appliedHooks
 
 local function Apply()
-  local layout = ns.DetectLayout()
-  if layout == "retail10" then
-    SkinRetail10()
-  elseif layout == "classic" then
-    SkinClassic()
-  else
+  if ns.DetectLayout() ~= "retail10" then
     SkinUnknown()
     return
   end
+
+  SkinRetail10()
 
   if appliedHooks then
     return
@@ -127,25 +106,17 @@ local function Apply()
     end
   end)
   ns.SafeHook("PlayerFrame_UpdateStatus", function()
-    if ns.db and ns.db.hideModernChrome then
-      ns.Hide(ns.GetPath(PlayerFrame, "PlayerFrameContent.PlayerFrameContentMain.StatusTexture"))
+    if not ns.db or not ns.db.playerFrame then
+      return
     end
-  end)
-  ns.SafeHook("PlayerFrame_UpdatePlayerRestLoop", function()
-    if ns.db and ns.db.hideModernChrome then
-      local rest = ns.GetPath(PlayerFrame, "PlayerFrameContent.PlayerFrameContentContextual.PlayerRestLoop")
-      if rest then
-        rest:Hide()
-        if rest.PlayerRestLoopAnim then
-          rest.PlayerRestLoopAnim:Stop()
-        end
-      end
+    local status = ns.GetPath(PlayerFrame, "PlayerFrameContent.PlayerFrameContentMain.StatusTexture")
+    if status and status.SetTexture then
+      status:SetTexture(ns.ResolveArt("PlayerStatus"))
     end
   end)
   ns.SafeHook("PlayerFrame_UpdatePvPStatus", function()
-    if ns.db and ns.db.hideModernChrome then
-      ns.Hide(ns.GetPath(PlayerFrame, "PlayerFrameContent.PlayerFrameContentMain.PvpBackgroundCircle"))
-      ns.Hide(ns.GetPath(PlayerFrame, "PlayerFrameContent.PlayerFrameContentMain.PvpBackgroundIcon"))
+    if ns.db and ns.db.playerFrame then
+      SkinPvp()
     end
   end)
   ns.SafeHook("PlayerFrame_UpdatePlayerNameTextAnchor", function()

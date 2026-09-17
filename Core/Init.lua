@@ -17,7 +17,6 @@ local defaults = {
     castBars = false,
     minimap = false,
     hideLevelAlert = false,
-    hideModernChrome = true,
     debug = false,
   },
 }

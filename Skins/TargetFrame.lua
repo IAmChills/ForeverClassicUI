@@ -12,6 +12,22 @@ local function SkinTargetPvp(frame)
   ns.SkinPvpIcon(ctx and ctx.PvpIcon, unit)
 end
 
+local function ClassificationArt(classification)
+  if classification == "worldboss" or classification == "elite" then
+    return ns.ResolveArt("TargetElite")
+  end
+  if classification == "rareelite" then
+    return ns.ResolveArt("TargetRareElite")
+  end
+  if classification == "rare" then
+    return ns.ResolveArt("TargetRare")
+  end
+  if classification == "minus" then
+    return ns.ResolveArt("TargetMinus")
+  end
+  return ns.ResolveArt("TargetFrame")
+end
+
 local function SkinRetailUnit(frame)
   if not frame or not frame.TargetFrameContainer then
     return false
@@ -24,25 +40,14 @@ local function SkinRetailUnit(frame)
     return false
   end
 
-  local art = ns.ResolveArt("TargetFrame")
-  if frame.unit then
-    local classification = UnitClassification(frame.unit)
-    if classification == "worldboss" or classification == "elite" then
-      art = ns.ResolveArt("TargetElite")
-    elseif classification == "rareelite" then
-      art = ns.ResolveArt("TargetRareElite")
-    elseif classification == "rare" then
-      art = ns.ResolveArt("TargetRare")
-    elseif classification == "minus" then
-      art = ns.ResolveArt("TargetMinus")
-    end
-  end
+  local classification = frame.unit and UnitClassification(frame.unit)
+  local art = ClassificationArt(classification)
   if container.FrameTexture then
-    container.FrameTexture:SetTexture(art)
-    container.FrameTexture:SetTexCoord(unpack(layout.texCoord))
-    container.FrameTexture:SetSize(unpack(layout.textureSize))
-    container.FrameTexture:ClearAllPoints()
-    container.FrameTexture:SetPoint(unpack(layout.texturePoint))
+    ns.SetTexture(container.FrameTexture, art)
+    ns.SetTexCoord(container.FrameTexture, unpack(layout.texCoord))
+    ns.SetSize(container.FrameTexture, unpack(layout.textureSize))
+    ns.ClearAllPoints(container.FrameTexture)
+    ns.SetPoint(container.FrameTexture, unpack(layout.texturePoint))
   end
 
   -- Dragon is part of the Elite/Rare Classic frame files.
@@ -50,34 +55,34 @@ local function SkinRetailUnit(frame)
 
   local portrait = container.Portrait
   if portrait then
-    portrait:SetSize(layout.portrait.size, layout.portrait.size)
-    portrait:ClearAllPoints()
-    portrait:SetPoint(unpack(layout.portrait.point))
+    ns.SetSize(portrait, layout.portrait.size, layout.portrait.size)
+    ns.ClearAllPoints(portrait)
+    ns.SetPoint(portrait, unpack(layout.portrait.point))
   end
 
   local health = ns.GetPath(main, "HealthBarsContainer.HealthBar") or main.HealthBar
   local mana = ns.GetPath(main, "ManaBar") or main.ManaBar
   ns.SetStatusBarClassic(health)
   ns.SetStatusBarClassic(mana)
-  if health then
-    health:SetStatusBarColor(0, 1, 0)
-  end
 
-  ns.SkinFlash(container.Flash, layout.flashTexCoord)
+  local flashArt = classification == "minus" and "TargetMinusFlash" or "FrameFlash"
+  ns.SkinFlash(container.Flash, layout.flashTexCoord, flashArt)
 
   local name = main.Name
   if name then
-    name:SetWidth(100)
-    name:SetJustifyH("CENTER")
-    name:ClearAllPoints()
-    name:SetPoint("TOPLEFT", 37, -34)
+    ns.SetWidth(name, 100)
+    if name.SetJustifyH then
+      pcall(name.SetJustifyH, name, "CENTER")
+    end
+    ns.ClearAllPoints(name)
+    ns.SetPoint(name, "TOPLEFT", 37, -34)
   end
 
   ns.Hide(main.LevelBackgroundCircle)
   if main.LevelText then
-    main.LevelText:ClearAllPoints()
-    main.LevelText:SetPoint("CENTER", frame, "TOPRIGHT", -51, -21)
-    main.LevelText:Show()
+    ns.ClearAllPoints(main.LevelText)
+    ns.SetPoint(main.LevelText, "CENTER", frame, "TOPRIGHT", -51, -21)
+    ns.Show(main.LevelText)
   end
 
   SkinTargetPvp(frame)
@@ -86,7 +91,7 @@ local function SkinRetailUnit(frame)
   if tot then
     local totArt = ns.ResolveArt("TargetOfTarget")
     if tot.FrameTexture then
-      tot.FrameTexture:SetTexture(totArt)
+      ns.SetTexture(tot.FrameTexture, totArt)
     end
     ns.SetStatusBarClassic(tot.HealthBar)
     ns.SetStatusBarClassic(tot.ManaBar)

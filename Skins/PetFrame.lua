@@ -3,6 +3,10 @@ local _, ns = ...
 local hookedShow
 
 local function Apply()
+  if PlayerFrame and PlayerFrame.state == "vehicle" then
+    return
+  end
+
   local pet = ns.FirstExisting("PetFrame", PlayerFrame and PlayerFrame.petFrame)
   if not pet then
     ns.compat.pet = "PetFrame not present yet."
@@ -10,8 +14,8 @@ local function Apply()
   end
 
   local texture = pet.texture or pet.Texture or _G.PetFrameTexture
-  if texture and texture.SetTexture then
-    texture:SetTexture(ns.ResolveArt("SmallTarget"))
+  if texture then
+    ns.SetTexture(texture, ns.ResolveArt("SmallTarget"))
   end
 
   local health = pet.HealthBar or pet.healthbar or _G.PetFrameHealthBar
@@ -20,19 +24,19 @@ local function Apply()
   ns.SetStatusBarClassic(mana)
 
   local mask = pet.PortraitMask or pet.portraitMask
-  if mask and mask.SetTexture then
-    mask:SetTexture(ns.ResolveArt("PortraitMask"))
+  if mask then
+    ns.SetTexture(mask, ns.ResolveArt("PortraitMask"))
   end
 
   ns.SkinFlash(pet.Flash or _G.PetFrameFlash)
   local attack = _G.PetAttackModeTexture
-  if attack and attack.SetTexture then
-    attack:SetTexture(ns.ResolveArt("PlayerStatus"))
+  if attack then
+    ns.SetTexture(attack, ns.ResolveArt("PlayerStatus"))
   end
 
   if not hookedShow then
     hookedShow = true
-    pet:HookScript("OnShow", function()
+    pcall(pet.HookScript, pet, "OnShow", function()
       if ns.db and ns.db.petFrame then
         Apply()
       end

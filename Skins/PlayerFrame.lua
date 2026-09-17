@@ -8,6 +8,10 @@ local function SkinPvp()
 end
 
 local function SkinRetail10()
+  if PlayerFrame.state == "vehicle" then
+    return
+  end
+
   local layout = ns.Layout.Player
   local container = PlayerFrame.PlayerFrameContainer
   local content = PlayerFrame.PlayerFrameContent
@@ -18,32 +22,32 @@ local function SkinRetail10()
 
   local art = ns.ResolveArt("PlayerFrame")
   if container.FrameTexture then
-    container.FrameTexture:SetTexture(art)
-    container.FrameTexture:SetTexCoord(unpack(layout.texCoord))
-    container.FrameTexture:SetSize(unpack(layout.textureSize))
-    container.FrameTexture:ClearAllPoints()
-    container.FrameTexture:SetPoint(unpack(layout.texturePoint))
-    container.FrameTexture:SetDrawLayer("BORDER")
+    ns.SetTexture(container.FrameTexture, art)
+    ns.SetTexCoord(container.FrameTexture, unpack(layout.texCoord))
+    ns.SetSize(container.FrameTexture, unpack(layout.textureSize))
+    ns.ClearAllPoints(container.FrameTexture)
+    ns.SetPoint(container.FrameTexture, unpack(layout.texturePoint))
+    ns.SetDrawLayer(container.FrameTexture, "BORDER")
   end
 
   if container.AlternatePowerFrameTexture then
-    container.AlternatePowerFrameTexture:SetTexture(art)
-    container.AlternatePowerFrameTexture:SetTexCoord(unpack(layout.texCoord))
+    ns.SetTexture(container.AlternatePowerFrameTexture, art)
+    ns.SetTexCoord(container.AlternatePowerFrameTexture, unpack(layout.texCoord))
   end
 
   local portrait = container.PlayerPortrait
   if portrait then
-    portrait:SetSize(layout.portrait.size, layout.portrait.size)
-    portrait:ClearAllPoints()
-    portrait:SetPoint(unpack(layout.portrait.point))
+    ns.SetSize(portrait, layout.portrait.size, layout.portrait.size)
+    ns.ClearAllPoints(portrait)
+    ns.SetPoint(portrait, unpack(layout.portrait.point))
   end
 
   local mask = container.PlayerPortraitMask
   if mask then
-    mask:SetTexture(ns.ResolveArt("PortraitMask"))
-    mask:SetSize(layout.portrait.size, layout.portrait.size)
-    mask:ClearAllPoints()
-    mask:SetPoint(unpack(layout.portrait.point))
+    ns.SetTexture(mask, ns.ResolveArt("PortraitMask"))
+    ns.SetSize(mask, layout.portrait.size, layout.portrait.size)
+    ns.ClearAllPoints(mask)
+    ns.SetPoint(mask, unpack(layout.portrait.point))
   end
 
   local health = ns.GetPath(main, "HealthBarsContainer.HealthBar")
@@ -51,30 +55,33 @@ local function SkinRetail10()
   ns.SetStatusBarClassic(health)
   ns.SetStatusBarClassic(mana)
   if health then
-    health:SetStatusBarColor(0, 1, 0)
+    ns.Capture(health)
+    pcall(health.SetStatusBarColor, health, 0, 1, 0)
   end
 
   ns.SkinFlash(container.FrameFlash, layout.flashTexCoord)
 
   local status = main.StatusTexture
-  if status and status.SetTexture then
-    status:SetTexture(ns.ResolveArt("PlayerStatus"))
+  if status then
+    ns.SetTexture(status, ns.ResolveArt("PlayerStatus"))
   end
 
   -- Forever HUD circle; Classic draws the number on the frame itself.
   ns.Hide(main.LevelBackgroundCircle)
 
   if PlayerName then
-    PlayerName:SetWidth(100)
-    PlayerName:SetJustifyH("CENTER")
-    PlayerName:ClearAllPoints()
-    PlayerName:SetPoint("TOPLEFT", 97, -34)
+    ns.SetWidth(PlayerName, 100)
+    if PlayerName.SetJustifyH then
+      pcall(PlayerName.SetJustifyH, PlayerName, "CENTER")
+    end
+    ns.ClearAllPoints(PlayerName)
+    ns.SetPoint(PlayerName, "TOPLEFT", 97, -34)
   end
 
   if PlayerLevelText then
-    PlayerLevelText:ClearAllPoints()
-    PlayerLevelText:SetPoint("CENTER", PlayerFrame, "TOPLEFT", 51, -21)
-    PlayerLevelText:Show()
+    ns.ClearAllPoints(PlayerLevelText)
+    ns.SetPoint(PlayerLevelText, "CENTER", PlayerFrame, "TOPLEFT", 51, -21)
+    ns.Show(PlayerLevelText)
   end
 
   SkinPvp()
@@ -105,26 +112,31 @@ local function Apply()
       Apply()
     end
   end)
+  ns.SafeHook("PlayerFrame_ToVehicleArt", function()
+    -- Forever vehicle art stays. Classic player chrome is reapplied on exit.
+  end)
   ns.SafeHook("PlayerFrame_UpdateStatus", function()
-    if not ns.db or not ns.db.playerFrame then
+    if not ns.db or not ns.db.playerFrame or PlayerFrame.state == "vehicle" then
       return
     end
     local status = ns.GetPath(PlayerFrame, "PlayerFrameContent.PlayerFrameContentMain.StatusTexture")
-    if status and status.SetTexture then
-      status:SetTexture(ns.ResolveArt("PlayerStatus"))
+    if status then
+      ns.SetTexture(status, ns.ResolveArt("PlayerStatus"))
     end
   end)
   ns.SafeHook("PlayerFrame_UpdatePvPStatus", function()
-    if ns.db and ns.db.playerFrame then
+    if ns.db and ns.db.playerFrame and PlayerFrame.state ~= "vehicle" then
       SkinPvp()
     end
   end)
   ns.SafeHook("PlayerFrame_UpdatePlayerNameTextAnchor", function()
-    if ns.db and ns.db.playerFrame and PlayerName then
-      PlayerName:SetWidth(100)
-      PlayerName:SetJustifyH("CENTER")
-      PlayerName:ClearAllPoints()
-      PlayerName:SetPoint("TOPLEFT", 97, -34)
+    if ns.db and ns.db.playerFrame and PlayerName and PlayerFrame.state ~= "vehicle" then
+      ns.SetWidth(PlayerName, 100)
+      if PlayerName.SetJustifyH then
+        pcall(PlayerName.SetJustifyH, PlayerName, "CENTER")
+      end
+      ns.ClearAllPoints(PlayerName)
+      ns.SetPoint(PlayerName, "TOPLEFT", 97, -34)
     end
   end)
 end

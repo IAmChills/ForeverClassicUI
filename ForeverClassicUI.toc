@@ -1,4 +1,4 @@
-﻿## Interface: 16009
+﻿## Interface: 16001
 ## Title: Forever Classic UI
 ## Notes: Restores Classic unit frames, cast bars, and HUD chrome in World of Warcraft Forever.
 ## Author: Chills
@@ -13,6 +13,7 @@
 # Core
 Core\Init.lua
 Core\Util.lua
+Core\Protect.lua
 Core\Config.lua
 Core\Probe.lua
 Core\EditMode.lua

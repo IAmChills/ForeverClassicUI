@@ -56,7 +56,7 @@ local function CreatePanel()
   subtitle:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
   subtitle:SetJustifyH("LEFT")
   subtitle:SetWidth(500)
-  subtitle:SetText("Classic frame skins are toggled from HUD Edit Mode. Checking a skin applies immediately. Unchecking asks for a reload to restore Forever's default art.")
+  subtitle:SetText("Classic frame skins are toggled from HUD Edit Mode. Checking applies immediately. Unchecking restores Forever's default art. Layout changes wait until combat ends.")
 
   local container = CreateFrame("Frame", nil, panel)
   container:SetPoint("TOPLEFT", subtitle, "BOTTOMLEFT", 0, -16)

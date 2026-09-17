@@ -34,13 +34,16 @@ local function RestoreClassicSpark(bar)
   if not bar or not bar.Spark then
     return
   end
-  bar.Spark:SetTexture(ns.ResolveArt("CastSpark"))
-  bar.Spark:SetAlpha(1)
-  bar.Spark:SetSize(32, 32)
+  ns.SetTexture(bar.Spark, ns.ResolveArt("CastSpark"))
+  if bar.Spark.SetAlpha then
+    pcall(bar.Spark.SetAlpha, bar.Spark, 1)
+  end
+  ns.SetSize(bar.Spark, 32, 32)
 end
 
 local function ApplyClassicCastFlag(bar)
   -- Blizzard's mixin uses Classic fill/border/spark when this is set.
+  ns.CaptureFlags(bar, { "classicStyleCastBar", "playCastFX" })
   bar.classicStyleCastBar = true
   bar.playCastFX = false
   StripModernCastArt(bar)
@@ -55,22 +58,22 @@ local function SkinPlayerBar(bar)
   ApplyClassicCastFlag(bar)
   if bar.Border then
     local layout = ns.Layout.CastBar
-    bar.Border:SetTexture(ns.ResolveArt("CastBorder"))
-    bar.Border:SetSize(unpack(layout.borderSize))
-    bar.Border:ClearAllPoints()
-    bar.Border:SetPoint(unpack(layout.borderPoint))
+    ns.SetTexture(bar.Border, ns.ResolveArt("CastBorder"))
+    ns.SetSize(bar.Border, unpack(layout.borderSize))
+    ns.ClearAllPoints(bar.Border)
+    ns.SetPoint(bar.Border, unpack(layout.borderPoint))
   end
   if bar.BorderShield then
     local layout = ns.Layout.CastBar
-    bar.BorderShield:SetTexture(ns.ResolveArt("CastShield"))
-    bar.BorderShield:SetSize(unpack(layout.borderSize))
-    bar.BorderShield:ClearAllPoints()
-    bar.BorderShield:SetPoint(unpack(layout.borderPoint))
+    ns.SetTexture(bar.BorderShield, ns.ResolveArt("CastShield"))
+    ns.SetSize(bar.BorderShield, unpack(layout.borderSize))
+    ns.ClearAllPoints(bar.BorderShield)
+    ns.SetPoint(bar.BorderShield, unpack(layout.borderPoint))
   end
   ApplyClassicCastFlag(bar)
 
   if bar.Icon then
-    bar.Icon:Hide()
+    ns.Hide(bar.Icon)
   end
 
   if not hookedLook[bar] then
@@ -81,7 +84,7 @@ local function SkinPlayerBar(bar)
       end
       ApplyClassicCastFlag(self)
       if self.look ~= "UNITFRAME" and self.Icon then
-        self.Icon:Hide()
+        ns.Hide(self.Icon)
       end
     end)
   end
@@ -94,7 +97,7 @@ local function SkinUnitBar(bar)
 
   ApplyClassicCastFlag(bar)
   if bar.Border then
-    bar.Border:SetTexture(ns.ResolveArt("CastBorderSmall"))
+    ns.SetTexture(bar.Border, ns.ResolveArt("CastBorderSmall"))
   end
   ApplyClassicCastFlag(bar)
 

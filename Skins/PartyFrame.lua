@@ -6,10 +6,13 @@ local function SkinMember(frame)
   if not frame then
     return
   end
+  if frame.state == "vehicle" then
+    return
+  end
 
   local texture = frame.Texture or frame.texture or ns.GetPath(frame, "Texture")
-  if texture and texture.SetTexture then
-    texture:SetTexture(ns.ResolveArt("PartyFrame"))
+  if texture then
+    ns.SetTexture(texture, ns.ResolveArt("PartyFrame"))
   end
 
   local health = frame.HealthBar
@@ -22,12 +25,12 @@ local function SkinMember(frame)
   ns.SetStatusBarClassic(mana)
 
   local mask = frame.PortraitMask
-  if mask and mask.SetTexture then
-    mask:SetTexture(ns.ResolveArt("PortraitMask"))
+  if mask then
+    ns.SetTexture(mask, ns.ResolveArt("PortraitMask"))
   end
 
-  if frame.Flash and frame.Flash.SetTexture then
-    frame.Flash:SetTexture(ns.ResolveArt("PartyFlash"))
+  if frame.Flash then
+    ns.SetTexture(frame.Flash, ns.ResolveArt("PartyFlash"))
   end
 
   if not hookedArt[frame] then

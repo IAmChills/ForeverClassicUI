@@ -1,0 +1,529 @@
+local _, ns = ...
+
+-- Combat-safe mutation, forbidden-frame guards, and native-state revert.
+
+local snapshots = {}
+local owned = {}
+local currentSkin
+local pendingReconcile
+
+local LAYOUT_TYPES = {
+  Frame = true,
+  Button = true,
+  CheckButton = true,
+  StatusBar = true,
+  Slider = true,
+  ScrollFrame = true,
+  EditBox = true,
+}
+
+local function Public(value)
+  if value ~= nil and type(issecretvalue) == "function" and issecretvalue(value) then
+    return nil
+  end
+  return value
+end
+
+function ns.InCombat()
+  return type(InCombatLockdown) == "function" and InCombatLockdown() and true or false
+end
+
+function ns.IsUsable(region)
+  if not region then
+    return false
+  end
+  local ok, forbidden = pcall(function()
+    return region.IsForbidden and region:IsForbidden()
+  end)
+  if not ok or forbidden then
+    return false
+  end
+  return true
+end
+
+function ns.IsProtectedFrame(region)
+  if not ns.IsUsable(region) then
+    return false
+  end
+  local ok, protected = pcall(function()
+    return region.IsProtected and region:IsProtected()
+  end)
+  return ok and protected and true or false
+end
+
+local function ObjectType(region)
+  if not region or not region.GetObjectType then
+    return nil
+  end
+  local ok, otype = pcall(region.GetObjectType, region)
+  if ok then
+    return otype
+  end
+end
+
+function ns.IsLayoutObject(region)
+  local otype = ObjectType(region)
+  return otype and LAYOUT_TYPES[otype] and true or false
+end
+
+function ns.CanLayout(region)
+  if ns.InCombat() then
+    return false
+  end
+  return ns.IsUsable(region)
+end
+
+function ns.QueueReconcile()
+  pendingReconcile = true
+end
+
+function ns.BeginSkin(name)
+  currentSkin = name
+end
+
+function ns.EndSkin()
+  currentSkin = nil
+end
+
+function ns.CaptureFlags(region, flags)
+  ns.Capture(region)
+  local snap = snapshots[region]
+  if not snap then
+    return
+  end
+  snap.flags = snap.flags or {}
+  for i = 1, #flags do
+    local key = flags[i]
+    if snap.flags[key] == nil then
+      snap.flags[key] = region[key]
+    end
+  end
+end
+
+function ns.Capture(region)
+  if not region or snapshots[region] or not ns.IsUsable(region) then
+    return
+  end
+
+  local snap = {}
+  pcall(function()
+    if region.GetTexture then
+      snap.texture = Public(region:GetTexture())
+    end
+    if region.GetAtlas then
+      snap.atlas = Public(region:GetAtlas())
+    end
+    if region.GetTexCoord then
+      snap.texCoord = { region:GetTexCoord() }
+    end
+    if region.GetWidth then
+      snap.width = Public(region:GetWidth())
+      snap.height = Public(region:GetHeight())
+    end
+    if region.GetAlpha then
+      snap.alpha = Public(region:GetAlpha())
+    end
+    if region.IsShown then
+      snap.shown = region:IsShown() and true or false
+    end
+    if region.GetDrawLayer then
+      snap.layer, snap.sublevel = region:GetDrawLayer()
+    end
+    if region.GetVertexColor then
+      snap.r, snap.g, snap.b, snap.a = region:GetVertexColor()
+    end
+    if region.GetStatusBarTexture then
+      local fill = region:GetStatusBarTexture()
+      if fill and ns.IsUsable(fill) then
+        if fill.GetTexture then
+          snap.statusBarTexture = Public(fill:GetTexture())
+        end
+        if fill.GetAtlas then
+          snap.statusBarAtlas = Public(fill:GetAtlas())
+        end
+        if fill.GetNumMaskTextures and fill.GetMaskTexture then
+          snap.masks = {}
+          for i = 1, fill:GetNumMaskTextures() do
+            snap.masks[#snap.masks + 1] = fill:GetMaskTexture(i)
+          end
+        end
+      end
+    elseif region.GetNumMaskTextures and region.GetMaskTexture then
+      snap.masks = {}
+      for i = 1, region:GetNumMaskTextures() do
+        snap.masks[#snap.masks + 1] = region:GetMaskTexture(i)
+      end
+    end
+    if region.GetStatusBarColor then
+      snap.sbR, snap.sbG, snap.sbB, snap.sbA = region:GetStatusBarColor()
+    end
+    if region.GetNormalTexture then
+      local tex = region:GetNormalTexture()
+      if tex then
+        snap.normalTexture = tex.GetTexture and Public(tex:GetTexture())
+        snap.normalAtlas = tex.GetAtlas and Public(tex:GetAtlas())
+      end
+    end
+    if region.GetPushedTexture then
+      local tex = region:GetPushedTexture()
+      if tex then
+        snap.pushedTexture = tex.GetTexture and Public(tex:GetTexture())
+        snap.pushedAtlas = tex.GetAtlas and Public(tex:GetAtlas())
+      end
+    end
+    if region.GetNumPoints then
+      local points = {}
+      local valid = true
+      for i = 1, region:GetNumPoints() do
+        local point, relativeTo, relativePoint, x, y = region:GetPoint(i)
+        if Public(point) == nil and point ~= nil then
+          valid = false
+          break
+        end
+        points[i] = { point, relativeTo, relativePoint, Public(x) or x, Public(y) or y }
+      end
+      if valid then
+        snap.points = points
+      end
+    end
+  end)
+
+  snapshots[region] = snap
+  owned[region] = currentSkin or owned[region] or "unknown"
+end
+
+local function RestoreRegion(region)
+  local snap = snapshots[region]
+  if not snap then
+    return true
+  end
+  if not ns.IsUsable(region) then
+    return false
+  end
+
+  local ok = pcall(function()
+    if snap.flags then
+      for key, value in pairs(snap.flags) do
+        region[key] = value
+      end
+    end
+
+    if region.SetStatusBarTexture and (snap.statusBarTexture or snap.statusBarAtlas) then
+      if snap.statusBarAtlas and snap.statusBarAtlas ~= "" then
+        local fill = region.GetStatusBarTexture and region:GetStatusBarTexture()
+        if fill and fill.SetAtlas then
+          fill:SetAtlas(snap.statusBarAtlas)
+        else
+          region:SetStatusBarTexture(snap.statusBarAtlas)
+        end
+      else
+        region:SetStatusBarTexture(snap.statusBarTexture)
+      end
+    end
+    if snap.sbR and region.SetStatusBarColor then
+      region:SetStatusBarColor(snap.sbR, snap.sbG, snap.sbB, snap.sbA)
+    end
+
+    if snap.atlas and snap.atlas ~= "" and region.SetAtlas then
+      region:SetAtlas(snap.atlas)
+    elseif region.SetTexture then
+      region:SetTexture(snap.texture)
+    end
+
+    if snap.texCoord and region.SetTexCoord then
+      region:SetTexCoord(unpack(snap.texCoord))
+    end
+    if snap.r and region.SetVertexColor then
+      region:SetVertexColor(snap.r, snap.g, snap.b, snap.a)
+    end
+    if snap.alpha and region.SetAlpha then
+      region:SetAlpha(snap.alpha)
+    end
+    if snap.layer and region.SetDrawLayer then
+      region:SetDrawLayer(snap.layer, snap.sublevel)
+    end
+
+    if snap.normalAtlas and snap.normalAtlas ~= "" and region.SetNormalAtlas then
+      region:SetNormalAtlas(snap.normalAtlas)
+    elseif snap.normalTexture and region.SetNormalTexture then
+      region:SetNormalTexture(snap.normalTexture)
+    end
+    if snap.pushedAtlas and snap.pushedAtlas ~= "" and region.SetPushedAtlas then
+      region:SetPushedAtlas(snap.pushedAtlas)
+    elseif snap.pushedTexture and region.SetPushedTexture then
+      region:SetPushedTexture(snap.pushedTexture)
+    end
+
+    if ns.CanLayout(region) then
+      if snap.width and snap.height and region.SetSize then
+        region:SetSize(snap.width, snap.height)
+      end
+      if snap.points and region.ClearAllPoints and region.SetPoint then
+        region:ClearAllPoints()
+        for i = 1, #snap.points do
+          local point = snap.points[i]
+          if point and point[1] then
+            region:SetPoint(unpack(point))
+          end
+        end
+      end
+    end
+
+    if snap.shown ~= nil then
+      if ns.IsLayoutObject(region) and not ns.CanLayout(region) then
+        ns.QueueReconcile()
+      elseif snap.shown then
+        if region.Show then
+          region:Show()
+        end
+      elseif region.Hide then
+        region:Hide()
+      end
+    end
+
+    local maskTarget = region
+    if region.GetStatusBarTexture then
+      maskTarget = region:GetStatusBarTexture() or region
+    end
+    if snap.masks and maskTarget and maskTarget.AddMaskTexture then
+      for i = 1, #snap.masks do
+        if snap.masks[i] then
+          maskTarget:AddMaskTexture(snap.masks[i])
+        end
+      end
+    end
+  end)
+
+  return ok
+end
+
+function ns.RestoreSkin(name)
+  local okAll = true
+  local regions = {}
+  for region, skin in pairs(owned) do
+    if skin == name then
+      regions[#regions + 1] = region
+    end
+  end
+  for i = 1, #regions do
+    local region = regions[i]
+    if not RestoreRegion(region) then
+      okAll = false
+    end
+    snapshots[region] = nil
+    owned[region] = nil
+  end
+  return okAll
+end
+
+function ns.SetTexture(region, path)
+  if not ns.IsUsable(region) or not region.SetTexture then
+    return
+  end
+  ns.Capture(region)
+  pcall(region.SetTexture, region, path)
+end
+
+function ns.SetTexCoord(region, ...)
+  if not ns.IsUsable(region) or not region.SetTexCoord then
+    return
+  end
+  ns.Capture(region)
+  pcall(region.SetTexCoord, region, ...)
+end
+
+function ns.SetDrawLayer(region, layer, sublevel)
+  if not ns.IsUsable(region) or not region.SetDrawLayer then
+    return
+  end
+  ns.Capture(region)
+  pcall(region.SetDrawLayer, region, layer, sublevel)
+end
+
+function ns.SetSize(region, width, height)
+  if not ns.IsUsable(region) then
+    return
+  end
+  ns.Capture(region)
+  if not ns.CanLayout(region) then
+    ns.QueueReconcile()
+    return
+  end
+  pcall(region.SetSize, region, width, height)
+end
+
+function ns.SetWidth(region, width)
+  if not ns.IsUsable(region) then
+    return
+  end
+  ns.Capture(region)
+  if not ns.CanLayout(region) then
+    ns.QueueReconcile()
+    return
+  end
+  pcall(region.SetWidth, region, width)
+end
+
+function ns.ClearAllPoints(region)
+  if not ns.IsUsable(region) then
+    return
+  end
+  ns.Capture(region)
+  if not ns.CanLayout(region) then
+    ns.QueueReconcile()
+    return
+  end
+  pcall(region.ClearAllPoints, region)
+end
+
+function ns.SetPoint(region, ...)
+  if not ns.IsUsable(region) then
+    return
+  end
+  ns.Capture(region)
+  if not ns.CanLayout(region) then
+    ns.QueueReconcile()
+    return
+  end
+  pcall(region.SetPoint, region, ...)
+end
+
+function ns.Show(region)
+  if not ns.IsUsable(region) then
+    return
+  end
+  ns.Capture(region)
+  if ns.IsLayoutObject(region) and not ns.CanLayout(region) then
+    ns.QueueReconcile()
+    return
+  end
+  if region.Show then
+    pcall(region.Show, region)
+  end
+end
+
+local origHide = ns.Hide
+function ns.Hide(region)
+  if not ns.IsUsable(region) then
+    return
+  end
+  ns.Capture(region)
+  if ns.IsLayoutObject(region) and not ns.CanLayout(region) then
+    if region.SetAlpha then
+      pcall(region.SetAlpha, region, 0)
+    end
+    ns.QueueReconcile()
+    return
+  end
+  origHide(region)
+end
+
+local origKeepSize = ns.SetTextureKeepSize
+function ns.SetTextureKeepSize(region, path, texCoord)
+  if not ns.IsUsable(region) then
+    return
+  end
+  ns.Capture(region)
+  if ns.CanLayout(region) then
+    origKeepSize(region, path, texCoord)
+    return
+  end
+  if region.SetTexture then
+    pcall(region.SetTexture, region, path)
+  end
+  if texCoord and region.SetTexCoord then
+    pcall(region.SetTexCoord, region, unpack(texCoord))
+  elseif region.SetTexCoord then
+    pcall(region.SetTexCoord, region, 0, 1, 0, 1)
+  end
+  ns.QueueReconcile()
+end
+
+local origStatusBar = ns.SetStatusBarClassic
+function ns.SetStatusBarClassic(bar)
+  if not ns.IsUsable(bar) then
+    return
+  end
+  ns.Capture(bar)
+  origStatusBar(bar)
+end
+
+local origHook = ns.SafeHook
+function ns.SafeHook(target, method, handler)
+  local hookfn
+  if type(target) == "string" then
+    hookfn = type(method) == "function" and method or handler
+  else
+    hookfn = handler
+  end
+  if type(hookfn) ~= "function" then
+    return
+  end
+  local wrapped = function(...)
+    local ok, err = pcall(hookfn, ...)
+    if not ok then
+      ns.Debug("hook error:", err)
+      ns.QueueReconcile()
+    end
+  end
+  if type(target) == "string" then
+    origHook(target, wrapped)
+  else
+    origHook(target, method, wrapped)
+  end
+end
+
+function ns.RefreshNative(name)
+  pcall(function()
+    if name == "player" and PlayerFrame then
+      if PlayerFrame.state == "vehicle" and PlayerFrame_ToVehicleArt then
+        PlayerFrame_ToVehicleArt(PlayerFrame)
+      elseif PlayerFrame_ToPlayerArt then
+        PlayerFrame_ToPlayerArt(PlayerFrame)
+      end
+    elseif name == "target" then
+      if TargetFrame and TargetFrame.unit and TargetFrame.CheckClassification then
+        TargetFrame:CheckClassification()
+      end
+      if TargetFrame and TargetFrame.CheckFaction then
+        TargetFrame:CheckFaction()
+      end
+      if FocusFrame and FocusFrame.unit and FocusFrame.CheckClassification then
+        FocusFrame:CheckClassification()
+      end
+      if FocusFrame and FocusFrame.CheckFaction then
+        FocusFrame:CheckFaction()
+      end
+    elseif name == "party" and PartyFrame then
+      for i = 1, 4 do
+        local frame = PartyFrame["MemberFrame" .. i]
+        if frame and frame.UpdateArt then
+          frame:UpdateArt()
+        end
+      end
+    elseif name == "pet" then
+      local pet = ns.FirstExisting("PetFrame", PlayerFrame and PlayerFrame.petFrame)
+      if pet and pet.Update then
+        pet:Update()
+      end
+    elseif name == "castbar" then
+      local bar = _G.PlayerCastingBarFrame
+      if bar and bar.SetLook and bar.look then
+        bar:SetLook(bar.look)
+      end
+    end
+  end)
+end
+
+function ns.FlushPendingReconcile()
+  if not pendingReconcile then
+    return
+  end
+  if ns.InCombat() then
+    return
+  end
+  pendingReconcile = false
+  if ns.ApplySkins then
+    ns.ApplySkins()
+  end
+end

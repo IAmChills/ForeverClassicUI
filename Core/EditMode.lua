@@ -244,7 +244,7 @@ local function Attach()
   section.expand = true
   section:SetWidth(SECTION_WIDTH)
 
-  local title = CreateTitle(section, "Classic UI", 1, "(Reload to undo)")
+  local title = CreateTitle(section, "Classic UI", 1)
 
   local grid = CreateGrid(section)
   grid.layoutIndex = 2

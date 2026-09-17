@@ -4,27 +4,34 @@ local function ApplyClassicButton(button, upKey, downKey)
   if not button then
     return
   end
+  ns.Capture(button)
   if button.SetNormalTexture then
-    button:SetNormalTexture(ns.ResolveArt(upKey))
+    pcall(button.SetNormalTexture, button, ns.ResolveArt(upKey))
   end
   if button.SetPushedTexture then
-    button:SetPushedTexture(ns.ResolveArt(downKey))
+    pcall(button.SetPushedTexture, button, ns.ResolveArt(downKey))
   end
 end
 
 local function SkinForeverCompass(compass)
   local texCoord = ns.Layout.Minimap.borderTexCoord
   ns.SetTextureKeepSize(compass, ns.ResolveArt("MinimapBorder"), texCoord)
-  compass:SetAlpha(1)
-  if compass.Show then
-    compass:Show()
+  if compass.SetAlpha then
+    pcall(compass.SetAlpha, compass, 1)
   end
+  ns.Show(compass)
 
   if not ns._minimapAtlasHooked then
     ns._minimapAtlasHooked = true
     hooksecurefunc(compass, "SetAtlas", function(self)
-      if ns.db and ns.db.minimap then
-        ns.SetTextureKeepSize(self, ns.ResolveArt("MinimapBorder"), texCoord)
+      local ok, err = pcall(function()
+        if ns.db and ns.db.minimap then
+          ns.SetTextureKeepSize(self, ns.ResolveArt("MinimapBorder"), texCoord)
+        end
+      end)
+      if not ok then
+        ns.Debug("minimap SetAtlas hook:", err)
+        ns.QueueReconcile()
       end
     end)
   end

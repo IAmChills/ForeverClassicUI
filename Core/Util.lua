@@ -30,6 +30,7 @@ ns.Art = {
   PvpHorde = "Interface\\TargetingFrame\\UI-PVP-Horde",
   PvpFFA = "Interface\\TargetingFrame\\UI-PVP-FFA",
   FrameFlash = "Interface\\TargetingFrame\\UI-TargetingFrame-Flash",
+  TargetMinusFlash = "Interface\\TargetingFrame\\UI-TargetingFrame-Minus-Flash",
   PlayerStatus = "Interface\\CharacterFrame\\UI-Player-Status",
   PartyFlash = "Interface\\TargetingFrame\\UI-PartyFrame-Flash",
 }
@@ -176,11 +177,14 @@ local function ClearTextureMasks(tex)
   if not tex or not tex.RemoveMaskTexture then
     return
   end
+  if ns.Capture then
+    ns.Capture(tex)
+  end
   if tex.GetNumMaskTextures and tex.GetMaskTexture then
     for i = tex:GetNumMaskTextures(), 1, -1 do
       local mask = tex:GetMaskTexture(i)
       if mask then
-        tex:RemoveMaskTexture(mask)
+        pcall(tex.RemoveMaskTexture, tex, mask)
       end
     end
   end
@@ -204,7 +208,7 @@ local function RemoveKnownMasks(tex, bar)
   end
   for i = 1, #masks do
     if masks[i] then
-      tex:RemoveMaskTexture(masks[i])
+      pcall(tex.RemoveMaskTexture, tex, masks[i])
     end
   end
 end
@@ -249,10 +253,13 @@ function ns.SetStatusBarClassic(bar)
   end
   local texture = ns.ResolveArt("StatusBar")
   if bar.SetStatusBarTexture then
-    bar:SetStatusBarTexture(texture)
+    pcall(bar.SetStatusBarTexture, bar, texture)
   end
   if bar.Spark then
-    bar.Spark:SetAlpha(0)
+    if ns.Capture then
+      ns.Capture(bar.Spark)
+    end
+    pcall(bar.Spark.SetAlpha, bar.Spark, 0)
   end
   ns.HideBarMasks(bar)
 end
@@ -282,16 +289,29 @@ function ns.SkinPvpIcon(icon, unit)
   end
   local art = ns.ClassicPvpArt(unit)
   if art then
-    icon:SetTexture(art)
+    if ns.SetTexture then
+      ns.SetTexture(icon, art)
+    else
+      icon:SetTexture(art)
+    end
   end
 end
 
-function ns.SkinFlash(flash, texCoord)
+function ns.SkinFlash(flash, texCoord, artKey)
   if not flash or not flash.SetTexture then
     return
   end
-  flash:SetTexture(ns.ResolveArt("FrameFlash"))
-  if texCoord and flash.SetTexCoord then
-    flash:SetTexCoord(unpack(texCoord))
+  local path = ns.ResolveArt(artKey or "FrameFlash")
+  if ns.SetTexture then
+    ns.SetTexture(flash, path)
+  else
+    flash:SetTexture(path)
+  end
+  if texCoord then
+    if ns.SetTexCoord then
+      ns.SetTexCoord(flash, unpack(texCoord))
+    elseif flash.SetTexCoord then
+      flash:SetTexCoord(unpack(texCoord))
+    end
   end
 end

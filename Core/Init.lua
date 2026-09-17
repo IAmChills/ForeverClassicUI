@@ -96,22 +96,11 @@ function ns.PromptReload()
   ns.Print("Reload the UI to restore Forever's default look. Type /reload")
 end
 
-local function IsSkinOption(key)
-  for _, optionKey in pairs(ns.skinOptions) do
-    if optionKey == key then
-      return true
-    end
-  end
-  return false
-end
-
 function ns.SetOption(key, value)
   if not ns.db then
     return
   end
-  local enabled = value and true or false
-  local turningOffSkin = IsSkinOption(key) and ns.db[key] and not enabled
-  ns.db[key] = enabled
+  ns.db[key] = value and true or false
   if ns.RefreshEditModeOptions then
     ns.RefreshEditModeOptions()
   end
@@ -121,9 +110,6 @@ function ns.SetOption(key, value)
   if ns.skinsLive then
     ns.ApplySkins()
   end
-  if turningOffSkin then
-    ns.PromptReload()
-  end
 end
 
 function ns.ApplySkins()
@@ -132,7 +118,15 @@ function ns.ApplySkins()
   end
 
   local db = ForeverClassicUIDB and ForeverClassicUIDB.profile
-  if not db or not db.enabled then
+  if not db then
+    return
+  end
+
+  if ns.InCombat and ns.InCombat() then
+    if ns.QueueReconcile then
+      ns.QueueReconcile()
+    end
+    ns.Debug("skins deferred until combat ends")
     return
   end
 
@@ -140,19 +134,50 @@ function ns.ApplySkins()
   ns.Debug("layout =", ns.layout)
 
   local order = { "player", "target", "pet", "party", "castbar", "minimap" }
+  local needReload = false
   for i = 1, #order do
     local name = order[i]
     local apply = ns.Skins[name]
-    if apply and db[ns.skinOptions[name]] then
-      local ok, err = pcall(apply, ns)
-      if ok then
-        ns.applied[name] = true
-      else
+    if apply then
+      local want = db.enabled and db[ns.skinOptions[name]]
+      if want then
+        if ns.BeginSkin then
+          ns.BeginSkin(name)
+        end
+        local ok, err = pcall(apply, ns)
+        if ns.EndSkin then
+          ns.EndSkin()
+        end
+        if ok then
+          ns.applied[name] = true
+          ns.compat[name] = nil
+        else
+          ns.applied[name] = false
+          ns.compat[name] = tostring(err)
+          ns.Print("Skin failed:", name, "-", err)
+        end
+      elseif ns.applied[name] then
+        local restored = true
+        if ns.RestoreSkin then
+          local ok, result = pcall(ns.RestoreSkin, name)
+          restored = ok and result ~= false
+          if not ok then
+            ns.Print("Revert failed:", name, "-", result)
+          end
+        end
         ns.applied[name] = false
-        ns.compat[name] = tostring(err)
-        ns.Print("Skin failed:", name, "-", err)
+        if ns.RefreshNative then
+          pcall(ns.RefreshNative, name)
+        end
+        if not restored then
+          needReload = true
+        end
       end
     end
+  end
+
+  if needReload then
+    ns.PromptReload()
   end
 end
 
@@ -178,12 +203,26 @@ local eventFrame = CreateFrame("Frame")
 eventFrame:RegisterEvent("ADDON_LOADED")
 eventFrame:RegisterEvent("PLAYER_LOGIN")
 eventFrame:RegisterEvent("PLAYER_ENTERING_WORLD")
+eventFrame:RegisterEvent("PLAYER_REGEN_ENABLED")
+eventFrame:RegisterEvent("UNIT_EXITED_VEHICLE")
 eventFrame:SetScript("OnEvent", function(self, event, ...)
   if event == "ADDON_LOADED" then
     OnAddonLoaded(self, ...)
   elseif event == "PLAYER_LOGIN" then
     OnPlayerLogin()
-  elseif event == "PLAYER_ENTERING_WORLD" then
+  elseif event == "PLAYER_REGEN_ENABLED" then
+    if ns.FlushPendingReconcile then
+      ns.FlushPendingReconcile()
+    elseif ns.db then
+      ns.ApplySkins()
+    end
+  elseif event == "PLAYER_ENTERING_WORLD" or event == "UNIT_EXITED_VEHICLE" then
+    if event == "UNIT_EXITED_VEHICLE" then
+      local unit = ...
+      if unit ~= "player" then
+        return
+      end
+    end
     if ns.db then
       ns.ApplySkins()
     end
@@ -258,6 +297,9 @@ SlashCmdList.FOREVERCLASSICUI = function(msg)
     end
     if ns.ApplyLevelAlertVisibility then
       ns.ApplyLevelAlertVisibility()
+    end
+    if ns.skinsLive then
+      ns.ApplySkins()
     end
     ns.Print("Settings reset.")
     return

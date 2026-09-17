@@ -10,12 +10,12 @@ ns.compat = ns.compat or {}
 local defaults = {
   profile = {
     enabled = true,
-    playerFrame = true,
-    targetFrame = true,
-    petFrame = true,
-    partyFrames = true,
-    castBars = true,
-    minimap = true,
+    playerFrame = false,
+    targetFrame = false,
+    petFrame = false,
+    partyFrames = false,
+    castBars = false,
+    minimap = false,
     hideModernChrome = true,
     debug = false,
   },
@@ -54,7 +54,27 @@ function ns.RegisterSkin(name, apply)
   ns.Skins[name] = apply
 end
 
+-- Flip to true once Edit Mode checkboxes should actually apply Classic art.
+ns.skinsLive = false
+
+function ns.SetOption(key, value)
+  if not ns.db then
+    return
+  end
+  ns.db[key] = value and true or false
+  if ns.RefreshEditModeOptions then
+    ns.RefreshEditModeOptions()
+  end
+  if ns.skinsLive then
+    ns.ApplySkins()
+  end
+end
+
 function ns.ApplySkins()
+  if not ns.skinsLive then
+    return
+  end
+
   local db = ForeverClassicUIDB and ForeverClassicUIDB.profile
   if not db or not db.enabled then
     return
@@ -104,7 +124,7 @@ end
 
 local function OnPlayerLogin()
   ns.ApplySkins()
-  ns.Print("Loaded.", "Layout:", ns.layout or "unknown", "- /fcui for commands.")
+  ns.Print("Loaded.", "Open HUD Edit Mode or /fcui options for Classic UI toggles.")
 end
 
 local eventFrame = CreateFrame("Frame")
@@ -126,7 +146,7 @@ end)
 if C_EditMode and EventRegistry and EventRegistry.RegisterCallback then
   pcall(function()
     EventRegistry:RegisterCallback("EditMode.Enter", function()
-      ns.Debug("Edit Mode entered; skins will reapply on exit.")
+      ns.Debug("Edit Mode entered.")
     end, ADDON_NAME)
     EventRegistry:RegisterCallback("EditMode.Exit", function()
       if ns.db then
@@ -142,7 +162,7 @@ SlashCmdList.FOREVERCLASSICUI = function(msg)
   msg = (msg or ""):lower():gsub("^%s+", ""):gsub("%s+$", "")
   if msg == "" or msg == "help" then
     ns.Print("Commands:")
-    print("  /fcui options   - open settings")
+    print("  /fcui options   - HUD Edit Mode Classic UI checkboxes")
     print("  /fcui probe     - dump Forever frame names and texture availability")
     print("  /fcui status    - show detected layout and applied skins")
     print("  /fcui debug     - toggle debug chat")
@@ -151,6 +171,9 @@ SlashCmdList.FOREVERCLASSICUI = function(msg)
   end
 
   if msg == "options" or msg == "config" then
+    if ns.OpenEditMode and ns.OpenEditMode() then
+      return
+    end
     if ns.OpenOptions then
       ns.OpenOptions()
     end
@@ -183,7 +206,10 @@ SlashCmdList.FOREVERCLASSICUI = function(msg)
   if msg == "reset" then
     ForeverClassicUIDB = CopyDefaults(defaults, {})
     ns.db = ForeverClassicUIDB.profile
-    ns.Print("Settings reset. /reload to reapply skins.")
+    if ns.RefreshEditModeOptions then
+      ns.RefreshEditModeOptions()
+    end
+    ns.Print("Settings reset.")
     return
   end
 

@@ -2,12 +2,12 @@ local _, ns = ...
 
 ns.Defaults = {
   enabled = true,
-  playerFrame = true,
-  targetFrame = true,
-  petFrame = true,
-  partyFrames = true,
-  castBars = true,
-  minimap = true,
+  playerFrame = false,
+  targetFrame = false,
+  petFrame = false,
+  partyFrames = false,
+  castBars = false,
+  minimap = false,
   hideModernChrome = true,
   debug = false,
 }
@@ -20,33 +20,39 @@ ns.OptionMeta = {
   },
   {
     key = "playerFrame",
-    label = "Player frame",
+    label = "Player Frame",
     help = "Restyle the player unit frame to Classic art and layout.",
+    editMode = true,
   },
   {
     key = "targetFrame",
-    label = "Target / focus frames",
+    label = "Target and Focus",
     help = "Restyle target and focus frames, including target-of-target.",
+    editMode = true,
   },
   {
     key = "petFrame",
-    label = "Pet frame",
+    label = "Pet Frame",
     help = "Restyle the pet unit frame.",
+    editMode = true,
   },
   {
     key = "partyFrames",
-    label = "Party frames",
+    label = "Party Frames",
     help = "Restyle party member frames.",
+    editMode = true,
   },
   {
     key = "castBars",
-    label = "Cast bars",
+    label = "Cast Bar",
     help = "Restyle player, target, and focus cast bars.",
+    editMode = true,
   },
   {
     key = "minimap",
     label = "Minimap",
     help = "Apply Classic minimap border and chrome.",
+    editMode = true,
   },
   {
     key = "hideModernChrome",
@@ -59,3 +65,14 @@ ns.OptionMeta = {
     help = "Print extra diagnostics while skins apply.",
   },
 }
+
+function ns.GetEditModeOptions()
+  local options = {}
+  for i = 1, #ns.OptionMeta do
+    local option = ns.OptionMeta[i]
+    if option.editMode then
+      options[#options + 1] = option
+    end
+  end
+  return options
+end

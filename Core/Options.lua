@@ -23,8 +23,15 @@ local function MakeCheckbox(parent, option, index)
     GameTooltip:Hide()
   end)
   box:SetScript("OnClick", function(self)
-    ns.db[option.key] = self:GetChecked() and true or false
-    if option.key ~= "debug" then
+    local checked = self:GetChecked() and true or false
+    if ns.SetOption then
+      ns.SetOption(option.key, checked)
+    else
+      ns.db[option.key] = checked
+    end
+    if option.key ~= "debug" and not ns.skinsLive then
+      ns.Print("Saved.", option.label, checked and "on" or "off", "- Classic art is not applied yet.")
+    elseif option.key ~= "debug" then
       ns.Print("Change stored. /reload to fully reapply skins.")
     end
   end)
@@ -51,7 +58,7 @@ local function CreatePanel()
   subtitle:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -6)
   subtitle:SetJustifyH("LEFT")
   subtitle:SetWidth(500)
-  subtitle:SetText("Restyle Forever's HUD using Classic art. Offsets and frame names are placeholders until the beta client is dumped with /fcui probe.")
+  subtitle:SetText("Classic frame skins are also toggled from HUD Edit Mode. These settings are stored now; Classic art is not applied until skins are wired up.")
 
   local container = CreateFrame("Frame", nil, panel)
   container:SetPoint("TOPLEFT", subtitle, "BOTTOMLEFT", 0, -16)

@@ -1,19 +1,21 @@
 ## Interface: 120100
 ## Title: Forever Classic UI
-## Notes: Restores Classic unit frames, cast bars, and HUD chrome in World of Warcraft: Forever.
+## Notes: Restores Classic unit frames, cast bars, and HUD chrome in World of Warcraft Forever.
 ## Author: Chills
 ## Version: 0.1.0
 ## SavedVariables: ForeverClassicUIDB
 ## Category: Unit Frames
-## IconTexture: Interface\Icons\INV_Misc_GroupNeedMore
+## IconTexture: Interface\Icons\INV_Misc_Token_Boost_Generic
 ## X-Website: https://github.com/IAmChills/ForeverClassicUI
 ## X-Flavor: Forever
+## OptionalDeps: Blizzard_EditMode
 
 # Core
 Core\Init.lua
 Core\Util.lua
 Core\Config.lua
 Core\Probe.lua
+Core\EditMode.lua
 
 # Skins
 Skins\PlayerFrame.lua

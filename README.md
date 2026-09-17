@@ -19,7 +19,3 @@ Open **HUD Edit Mode** (or `/fcui options`) and use the Classic UI checkboxes to
 | `/fcui options` | Open HUD Edit Mode |
 | `/fcui status` | Show which skins are enabled |
 | `/fcui reset` | Restore default settings |
-
-## License
-
-MIT. See `LICENSE`.

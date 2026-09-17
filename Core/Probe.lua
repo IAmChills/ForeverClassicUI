@@ -94,6 +94,7 @@ function ns.RunProbe(printToChat)
     "MinimapCluster",
     "MinimapBorder",
     "MinimapBorderTop",
+    "MinimapCompassTexture",
     "BuffFrame",
     "CompactRaidFrameContainer",
     "MainMenuBar",

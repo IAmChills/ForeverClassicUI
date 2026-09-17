@@ -2,14 +2,13 @@ local ADDON_NAME, ns = ...
 
 ns.MEDIA_ROOT = "Interface\\AddOns\\" .. ADDON_NAME .. "\\Media\\"
 
--- Classic art shipped by Blizzard. Forever may still include these, or they
--- may need to be dropped into Media/ after beta texture extraction.
 ns.Art = {
   PlayerFrame = "Interface\\TargetingFrame\\UI-TargetingFrame",
   TargetFrame = "Interface\\TargetingFrame\\UI-TargetingFrame",
   TargetElite = "Interface\\TargetingFrame\\UI-TargetingFrame-Elite",
   TargetRare = "Interface\\TargetingFrame\\UI-TargetingFrame-Rare",
   TargetRareElite = "Interface\\TargetingFrame\\UI-TargetingFrame-Rare-Elite",
+  TargetMinus = "Interface\\TargetingFrame\\UI-TargetingFrame-Minus",
   SmallTarget = "Interface\\TargetingFrame\\UI-SmallTargetingFrame",
   TargetOfTarget = "Interface\\TargetingFrame\\UI-TargetofTargetFrame",
   PartyFrame = "Interface\\TargetingFrame\\UI-PartyFrame",
@@ -20,6 +19,10 @@ ns.Art = {
   CastFlash = "Interface\\CastingBar\\UI-CastingBar-Flash",
   CastShield = "Interface\\CastingBar\\UI-CastingBar-Small-Shield",
   MinimapBorder = "Interface\\Minimap\\UI-Minimap-Border",
+  MinimapZoomInUp = "Interface\\Minimap\\UI-Minimap-ZoomInButton-Up",
+  MinimapZoomInDown = "Interface\\Minimap\\UI-Minimap-ZoomInButton-Down",
+  MinimapZoomOutUp = "Interface\\Minimap\\UI-Minimap-ZoomOutButton-Up",
+  MinimapZoomOutDown = "Interface\\Minimap\\UI-Minimap-ZoomOutButton-Down",
   PortraitMask = "Interface\\CharacterFrame\\TempPortraitAlphaMask",
   GroupIndicator = "Interface\\CharacterFrame\\UI-CharacterFrame-GroupIndicator",
   LeaderIcon = "Interface\\GroupFrame\\UI-Group-LeaderIcon",
@@ -30,7 +33,7 @@ ns.Layout = {
     size = { 232, 100 },
     texturePoint = { "TOPLEFT", -19, -8 },
     textureSize = { 232, 100 },
-    -- Classic PlayerFrame.xml tex coords (mirrored targeting frame).
+    -- Mirrored vs the target frame sheet.
     texCoord = { 1, 0.09375, 0, 0.78125 },
     portrait = { size = 64, point = { "TOPLEFT", 27, -17 } },
   },
@@ -140,7 +143,69 @@ function ns.SafeHook(target, method, handler)
   end
 end
 
+local function ClearTextureMasks(tex)
+  if not tex or not tex.RemoveMaskTexture then
+    return
+  end
+  if tex.GetNumMaskTextures and tex.GetMaskTexture then
+    for i = tex:GetNumMaskTextures(), 1, -1 do
+      local mask = tex:GetMaskTexture(i)
+      if mask then
+        tex:RemoveMaskTexture(mask)
+      end
+    end
+  end
+end
+
+local function RemoveKnownMasks(tex, bar)
+  if not tex or not tex.RemoveMaskTexture or not bar then
+    return
+  end
+  local masks = {
+    bar.PowerBarMask,
+    bar.HealthBarMask,
+    bar.ManaBarMask,
+    bar.Mask,
+  }
+  local parent = bar.GetParent and bar:GetParent()
+  if parent then
+    masks[#masks + 1] = parent.HealthBarMask
+    masks[#masks + 1] = parent.ManaBarMask
+    masks[#masks + 1] = parent.PowerBarMask
+  end
+  for i = 1, #masks do
+    if masks[i] then
+      tex:RemoveMaskTexture(masks[i])
+    end
+  end
+end
+
+function ns.HideBarMasks(bar)
+  -- Retail masks clip Classic status-bar textures.
+  if not bar then
+    return
+  end
+  ns.Hide(bar.PowerBarMask)
+  ns.Hide(bar.HealthBarMask)
+  ns.Hide(bar.ManaBarMask)
+  ns.Hide(bar.Mask)
+  local parent = bar.GetParent and bar:GetParent()
+  if parent then
+    ns.Hide(parent.HealthBarMask)
+    ns.Hide(parent.ManaBarMask)
+    ns.Hide(parent.PowerBarMask)
+  end
+  local fill = bar.GetStatusBarTexture and bar:GetStatusBarTexture()
+  ClearTextureMasks(fill)
+  RemoveKnownMasks(fill, bar)
+  if bar.FeedbackFrame then
+    ClearTextureMasks(bar.FeedbackFrame)
+    RemoveKnownMasks(bar.FeedbackFrame, bar)
+  end
+end
+
 function ns.DetectLayout()
+  -- PlayerFrameContainer is the retail-shaped HUD.
   if PlayerFrame and PlayerFrame.PlayerFrameContainer then
     return "retail10"
   end
@@ -164,7 +229,5 @@ function ns.SetStatusBarClassic(bar)
   if bar.Spark then
     bar.Spark:SetAlpha(0)
   end
-  if bar.PowerBarMask then
-    ns.Hide(bar.PowerBarMask)
-  end
+  ns.HideBarMasks(bar)
 end

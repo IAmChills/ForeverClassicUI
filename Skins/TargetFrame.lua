@@ -1,5 +1,7 @@
 local _, ns = ...
 
+local hookedClassification = {}
+
 local function HideModernTargetChrome(frame)
   if not frame or not ns.db.hideModernChrome then
     return
@@ -11,7 +13,10 @@ local function HideModernTargetChrome(frame)
   ns.Hide(ctx and ctx.PrestigePortrait)
   ns.Hide(ctx and ctx.PrestigeBadge)
   ns.Hide(ctx and ctx.BossIcon)
+  ns.Hide(ctx and ctx.PvpBackgroundCircle)
+  ns.Hide(ctx and ctx.PvpBackgroundIcon)
   ns.Hide(main and main.ReputationColor)
+  ns.Hide(main and main.LevelBackgroundCircle)
   ns.Hide(container and container.Flash)
   ns.Hide(container and container.BossPortraitFrameTexture)
 end
@@ -24,12 +29,23 @@ local function SkinRetailUnit(frame)
   local layout = ns.Layout.Target
   local container = frame.TargetFrameContainer
   local main = ns.GetPath(frame, "TargetFrameContent.TargetFrameContentMain")
-  local ctx = ns.GetPath(frame, "TargetFrameContent.TargetFrameContentContextual")
   if not main then
     return false
   end
 
   local art = ns.ResolveArt("TargetFrame")
+  if frame.unit then
+    local classification = UnitClassification(frame.unit)
+    if classification == "worldboss" or classification == "elite" then
+      art = ns.ResolveArt("TargetElite")
+    elseif classification == "rareelite" then
+      art = ns.ResolveArt("TargetRareElite")
+    elseif classification == "rare" then
+      art = ns.ResolveArt("TargetRare")
+    elseif classification == "minus" then
+      art = ns.ResolveArt("TargetMinus")
+    end
+  end
   if container.FrameTexture then
     container.FrameTexture:SetTexture(art)
     container.FrameTexture:SetTexCoord(unpack(layout.texCoord))
@@ -46,7 +62,7 @@ local function SkinRetailUnit(frame)
   end
 
   local health = ns.GetPath(main, "HealthBarsContainer.HealthBar") or main.HealthBar
-  local mana = main.ManaBar
+  local mana = ns.GetPath(main, "ManaBar") or main.ManaBar
   ns.SetStatusBarClassic(health)
   ns.SetStatusBarClassic(mana)
   if health then
@@ -62,6 +78,12 @@ local function SkinRetailUnit(frame)
   end
 
   HideModernTargetChrome(frame)
+  ns.Hide(main.LevelBackgroundCircle)
+  if main.LevelText then
+    main.LevelText:ClearAllPoints()
+    main.LevelText:SetPoint("CENTER", frame, "TOPRIGHT", -51, -21)
+    main.LevelText:Show()
+  end
 
   local tot = frame.totFrame
   if tot then
@@ -73,12 +95,21 @@ local function SkinRetailUnit(frame)
     ns.SetStatusBarClassic(tot.ManaBar)
   end
 
-  ns.SafeHook(frame, "CheckClassification", function()
-    ns.SetStatusBarClassic(health)
-    if health then
-      health:SetStatusBarColor(0, 1, 0)
-    end
-  end)
+  if not hookedClassification[frame] then
+    hookedClassification[frame] = true
+    ns.SafeHook(frame, "CheckClassification", function(self)
+      if not ns.db or not ns.db.targetFrame then
+        return
+      end
+      SkinRetailUnit(self)
+    end)
+    ns.SafeHook(frame, "CheckFaction", function(self)
+      if not ns.db or not ns.db.targetFrame then
+        return
+      end
+      HideModernTargetChrome(self)
+    end)
+  end
 
   return true
 end

@@ -1,5 +1,7 @@
 local _, ns = ...
 
+local hookedArt = {}
+
 local function SkinMember(frame)
   if not frame then
     return
@@ -13,14 +15,36 @@ local function SkinMember(frame)
   local health = frame.HealthBar
     or frame.healthbar
     or ns.GetPath(frame, "HealthBar")
+    or ns.GetPath(frame, "HealthBarContainer.HealthBar")
     or ns.GetPath(frame, "HealthBarsContainer.HealthBar")
   local mana = frame.ManaBar or frame.manabar or ns.GetPath(frame, "ManaBar")
   ns.SetStatusBarClassic(health)
   ns.SetStatusBarClassic(mana)
 
+  local mask = frame.PortraitMask
+  if mask and mask.SetTexture then
+    mask:SetTexture(ns.ResolveArt("PortraitMask"))
+  end
+
   if ns.db.hideModernChrome then
     ns.Hide(frame.Flash)
     ns.Hide(frame.RoleIcon)
+  end
+
+  if not hookedArt[frame] then
+    hookedArt[frame] = true
+    ns.SafeHook(frame, "UpdateArt", function(self)
+      if not ns.db or not ns.db.partyFrames then
+        return
+      end
+      SkinMember(self)
+    end)
+    ns.SafeHook(frame, "ToPlayerArt", function(self)
+      if not ns.db or not ns.db.partyFrames then
+        return
+      end
+      SkinMember(self)
+    end)
   end
 end
 

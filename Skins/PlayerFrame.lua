@@ -9,6 +9,9 @@ local MODERN_CHROME = {
   "PlayerFrameContent.PlayerFrameContentContextual.PVPIcon",
   "PlayerFrameContent.PlayerFrameContentContextual.PlayerRestLoop",
   "PlayerFrameContent.PlayerFrameContentMain.StatusTexture",
+  "PlayerFrameContent.PlayerFrameContentMain.LevelBackgroundCircle",
+  "PlayerFrameContent.PlayerFrameContentMain.PvpBackgroundCircle",
+  "PlayerFrameContent.PlayerFrameContentMain.PvpBackgroundIcon",
   "PlayerFrameContainer.FrameFlash",
 }
 
@@ -60,6 +63,8 @@ local function SkinRetail10()
     health:SetStatusBarColor(0, 1, 0)
   end
 
+  ns.Hide(ns.GetPath(main, "LevelBackgroundCircle"))
+
   if PlayerName then
     PlayerName:SetWidth(100)
     PlayerName:SetJustifyH("CENTER")
@@ -69,17 +74,22 @@ local function SkinRetail10()
 
   if ns.db.hideModernChrome then
     ns.HideTree(PlayerFrame, MODERN_CHROME)
-    ns.Hide(_G.PlayerLevelText)
     ns.Hide(_G.PlayerPVPTimerText)
     if contextual and contextual.PlayerRestLoop and contextual.PlayerRestLoop.PlayerRestLoopAnim then
       contextual.PlayerRestLoop.PlayerRestLoopAnim:Stop()
     end
   end
+
+  -- Level number sits on the Classic frame, not in the HUD circle.
+  if PlayerLevelText then
+    PlayerLevelText:ClearAllPoints()
+    PlayerLevelText:SetPoint("CENTER", PlayerFrame, "TOPLEFT", 51, -21)
+    PlayerLevelText:Show()
+  end
 end
 
 local function SkinClassic()
-  -- Already Classic-shaped. Keep a light pass so Forever-specific overlays can
-  -- still be stripped if they appear on top of classic frames.
+  -- Frame is already Classic-shaped; only strip extra overlays.
   if ns.db.hideModernChrome then
     ns.Hide(_G.PlayerFrameGroupIndicatorLeft)
     ns.Hide(_G.PlayerPVPIcon)
@@ -130,6 +140,20 @@ local function Apply()
           rest.PlayerRestLoopAnim:Stop()
         end
       end
+    end
+  end)
+  ns.SafeHook("PlayerFrame_UpdatePvPStatus", function()
+    if ns.db and ns.db.hideModernChrome then
+      ns.Hide(ns.GetPath(PlayerFrame, "PlayerFrameContent.PlayerFrameContentMain.PvpBackgroundCircle"))
+      ns.Hide(ns.GetPath(PlayerFrame, "PlayerFrameContent.PlayerFrameContentMain.PvpBackgroundIcon"))
+    end
+  end)
+  ns.SafeHook("PlayerFrame_UpdatePlayerNameTextAnchor", function()
+    if ns.db and ns.db.playerFrame and PlayerName then
+      PlayerName:SetWidth(100)
+      PlayerName:SetJustifyH("CENTER")
+      PlayerName:ClearAllPoints()
+      PlayerName:SetPoint("TOPLEFT", 97, -34)
     end
   end)
 end

@@ -43,6 +43,7 @@ local function IsLevelUpEventType(eventType)
     end
   end
 
+  -- Fallback if Enum.EventToastEventType is missing.
   return eventType == 0 or eventType == 1 or eventType == 15
 end
 
@@ -133,7 +134,7 @@ local function ShouldHideRaidWarning()
   if not ShouldHide() or not InLevelUpWindow() then
     return false
   end
-  -- Same split as the Hardcore WeakAura: raid warning chat events stay visible.
+  -- Keep real raid warnings that arrive during the level-up window.
   return (GetTime() - lastRaidWarningAt) >= 1
 end
 

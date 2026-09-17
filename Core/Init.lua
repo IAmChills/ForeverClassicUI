@@ -55,14 +55,64 @@ function ns.RegisterSkin(name, apply)
   ns.Skins[name] = apply
 end
 
--- Flip to true once Edit Mode checkboxes should actually apply Classic art.
-ns.skinsLive = false
+ns.skinsLive = true
+
+ns.skinOptions = {
+  player = "playerFrame",
+  target = "targetFrame",
+  pet = "petFrame",
+  party = "partyFrames",
+  castbar = "castBars",
+  minimap = "minimap",
+}
+
+local RELOAD_POPUP = "FOREVERCLASSICUI_RELOAD"
+
+local function EnsureReloadPopup()
+  if not StaticPopupDialogs then
+    return false
+  end
+  if not StaticPopupDialogs[RELOAD_POPUP] then
+    StaticPopupDialogs[RELOAD_POPUP] = {
+      text = "Reload the UI to restore Forever's default look.",
+      button1 = RELOADUI or "Reload UI",
+      button2 = CANCEL or "Later",
+      OnAccept = function()
+        ReloadUI()
+      end,
+      timeout = 0,
+      whileDead = 1,
+      hideOnEscape = 1,
+      preferredIndex = 3,
+    }
+  end
+  return true
+end
+
+function ns.PromptReload()
+  if EnsureReloadPopup() and StaticPopup_Show then
+    StaticPopup_Show(RELOAD_POPUP)
+    return
+  end
+  ns.Print("Reload the UI to restore Forever's default look. Type /reload")
+end
+
+local function IsSkinOption(key)
+  for _, optionKey in pairs(ns.skinOptions) do
+    if optionKey == key then
+      return true
+    end
+  end
+  return false
+end
 
 function ns.SetOption(key, value)
   if not ns.db then
     return
   end
-  ns.db[key] = value and true or false
+  local enabled = value and true or false
+  local turningOffSkin = IsSkinOption(key) and ns.db[key] and not enabled
+  ns.db[key] = enabled
   if ns.RefreshEditModeOptions then
     ns.RefreshEditModeOptions()
   end
@@ -71,6 +121,9 @@ function ns.SetOption(key, value)
   end
   if ns.skinsLive then
     ns.ApplySkins()
+  end
+  if turningOffSkin then
+    ns.PromptReload()
   end
 end
 
@@ -103,15 +156,6 @@ function ns.ApplySkins()
     end
   end
 end
-
-ns.skinOptions = {
-  player = "playerFrame",
-  target = "targetFrame",
-  pet = "petFrame",
-  party = "partyFrames",
-  castbar = "castBars",
-  minimap = "minimap",
-}
 
 local function OnAddonLoaded(_, addonName)
   if addonName ~= ADDON_NAME then

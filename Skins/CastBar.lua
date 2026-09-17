@@ -1,7 +1,9 @@
 local _, ns = ...
 
+local hookedLook = {}
+
 local function StripModernCastArt(bar)
-  if not bar or not ns.db.hideModernChrome then
+  if not bar then
     return
   end
   local extras = {
@@ -18,10 +20,31 @@ local function StripModernCastArt(bar)
     "Flakes02",
     "Flakes03",
     "TextBorder",
+    "DropShadow",
+    "ChargeGlow",
+    "ChargeFlash",
+    "InterruptGlow",
   }
   for i = 1, #extras do
     ns.Hide(bar[extras[i]])
   end
+end
+
+local function RestoreClassicSpark(bar)
+  if not bar or not bar.Spark then
+    return
+  end
+  bar.Spark:SetTexture(ns.ResolveArt("CastSpark"))
+  bar.Spark:SetAlpha(1)
+  bar.Spark:SetSize(32, 32)
+end
+
+local function ApplyClassicCastFlag(bar)
+  -- Blizzard's mixin uses Classic fill/border/spark when this is set.
+  bar.classicStyleCastBar = true
+  bar.playCastFX = false
+  StripModernCastArt(bar)
+  RestoreClassicSpark(bar)
 end
 
 local function SkinPlayerBar(bar)
@@ -29,54 +52,37 @@ local function SkinPlayerBar(bar)
     return
   end
 
-  local layout = ns.Layout.CastBar
-  bar:SetSize(unpack(layout.playerSize))
-  ns.SetStatusBarClassic(bar)
-
-  if bar.Background and bar.Background.SetColorTexture then
-    bar.Background:SetColorTexture(0, 0, 0, 0.5)
+  ApplyClassicCastFlag(bar)
+  if bar.SetLook then
+    bar:SetLook(bar.look or "CLASSIC")
+  else
+    local layout = ns.Layout.CastBar
+    bar:SetSize(unpack(layout.playerSize))
+    if bar.Border then
+      bar.Border:SetTexture(ns.ResolveArt("CastBorder"))
+      bar.Border:SetSize(unpack(layout.borderSize))
+      bar.Border:ClearAllPoints()
+      bar.Border:SetPoint(unpack(layout.borderPoint))
+    end
   end
-
-  if bar.Border then
-    bar.Border:SetTexture(ns.ResolveArt("CastBorder"))
-    bar.Border:SetSize(unpack(layout.borderSize))
-    bar.Border:ClearAllPoints()
-    bar.Border:SetPoint(unpack(layout.borderPoint))
-  end
-
-  if bar.BorderShield then
-    bar.BorderShield:SetTexture(ns.ResolveArt("CastShield"))
-    bar.BorderShield:SetSize(unpack(layout.borderSize))
-    bar.BorderShield:ClearAllPoints()
-    bar.BorderShield:SetPoint(unpack(layout.borderPoint))
-  end
-
-  if bar.Flash then
-    bar.Flash:SetTexture(ns.ResolveArt("CastFlash"))
-    bar.Flash:SetSize(unpack(layout.borderSize))
-    bar.Flash:ClearAllPoints()
-    bar.Flash:SetPoint(unpack(layout.borderPoint))
-  end
-
-  if bar.Spark then
-    bar.Spark:SetTexture(ns.ResolveArt("CastSpark"))
-    bar.Spark:SetAlpha(1)
-  end
+  ApplyClassicCastFlag(bar)
 
   if bar.Icon then
     bar.Icon:Hide()
   end
 
-  if bar.Text then
-    bar.Text:ClearAllPoints()
-    bar.Text:SetPoint("CENTER", bar, "CENTER", 0, 1)
+  if not hookedLook[bar] then
+    hookedLook[bar] = true
+    ns.SafeHook(bar, "SetLook", function(self)
+      if not ns.db or not ns.db.castBars then
+        return
+      end
+      ApplyClassicCastFlag(self)
+      if self.look ~= "UNITFRAME" and self.Icon then
+        self.Icon:Hide()
+      end
+    end)
   end
-
-  StripModernCastArt(bar)
-
-  ns.SafeHook(bar, "SetLook", function(self)
-    SkinPlayerBar(self)
-  end)
 end
 
 local function SkinUnitBar(bar)
@@ -84,17 +90,23 @@ local function SkinUnitBar(bar)
     return
   end
 
-  ns.SetStatusBarClassic(bar)
-  if bar.Background and bar.Background.SetColorTexture then
-    bar.Background:SetColorTexture(0, 0, 0, 0.5)
-  end
-  if bar.Border then
+  ApplyClassicCastFlag(bar)
+  if bar.SetLook then
+    bar:SetLook(bar.look or "UNITFRAME")
+  elseif bar.Border then
     bar.Border:SetTexture(ns.ResolveArt("CastBorderSmall"))
   end
-  if bar.TextBorder then
-    ns.Hide(bar.TextBorder)
+  ApplyClassicCastFlag(bar)
+
+  if not hookedLook[bar] then
+    hookedLook[bar] = true
+    ns.SafeHook(bar, "SetLook", function(self)
+      if not ns.db or not ns.db.castBars then
+        return
+      end
+      ApplyClassicCastFlag(self)
+    end)
   end
-  StripModernCastArt(bar)
 end
 
 local function Apply()

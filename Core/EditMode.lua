@@ -1,8 +1,6 @@
 local ADDON_NAME, ns = ...
 
--- HUD Edit Mode integration. Checkboxes live on EditModeManagerFrame so they
--- match Blizzard's extra-option controls. They only write SavedVariables;
--- skins are not applied from here yet.
+-- Checkboxes on EditModeManagerFrame. They write SavedVariables and apply immediately.
 
 local CHECKBOX_WIDTH = 225
 local CHECKBOX_HEIGHT = 32
@@ -75,9 +73,6 @@ local function AddTooltip(box, option)
         tooltip:SetOwner(self, "ANCHOR_RIGHT")
         tooltip:SetText(option.label, 1, 0.82, 0)
         tooltip:AddLine(option.help, 1, 1, 1, true)
-        if not option.live then
-          tooltip:AddLine("Skin is stored only. Classic art is not applied yet.", 0.7, 0.7, 0.7, true)
-        end
         tooltip:Show()
       end)
       region:HookScript("OnLeave", function()
@@ -156,17 +151,25 @@ local function CreateCheckbox(parent, option, layoutIndex)
   return box
 end
 
-local function CreateTitle(parent, text, layoutIndex)
+local function CreateTitle(parent, text, layoutIndex, hint)
   local frame = CreateFrame("Frame", nil, parent)
-  frame:SetSize(CHECKBOX_WIDTH, CHECKBOX_HEIGHT)
+  frame:SetSize(SECTION_WIDTH, CHECKBOX_HEIGHT)
   frame.layoutIndex = layoutIndex
-  frame.fixedWidth = CHECKBOX_WIDTH
+  frame.fixedWidth = SECTION_WIDTH
   frame.fixedHeight = CHECKBOX_HEIGHT
 
   local label = frame:CreateFontString(nil, "ARTWORK", "GameFontNormalLarge")
   label:SetPoint("LEFT", 5, 0)
   label:SetText(text)
   frame.Title = label
+
+  if hint then
+    local note = frame:CreateFontString(nil, "ARTWORK", "GameFontHighlight")
+    note:SetPoint("LEFT", label, "RIGHT", 8, 0)
+    note:SetText(hint)
+    note:SetTextColor(1, 0.2, 0.2)
+    frame.Hint = note
+  end
   return frame
 end
 
@@ -241,7 +244,7 @@ local function Attach()
   section.expand = true
   section:SetWidth(SECTION_WIDTH)
 
-  local title = CreateTitle(section, "Classic UI", 1)
+  local title = CreateTitle(section, "Classic UI", 1, "(Reload to undo)")
 
   local grid = CreateGrid(section)
   grid.layoutIndex = 2

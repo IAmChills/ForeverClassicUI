@@ -2,7 +2,6 @@ local ADDON_NAME, ns = ...
 
 ns.ADDON_NAME = ADDON_NAME
 ns.Title = "Forever Classic UI"
-ns.Version = "0.1.0"
 ns.Skins = ns.Skins or {}
 ns.applied = {}
 ns.compat = ns.compat or {}
@@ -10,16 +9,20 @@ ns.compat = ns.compat or {}
 local defaults = {
   profile = {
     enabled = true,
-    playerFrame = false,
-    targetFrame = false,
-    petFrame = false,
-    partyFrames = false,
-    castBars = false,
-    minimap = false,
+    playerFrame = true,
+    targetFrame = true,
+    petFrame = true,
+    partyFrames = true,
+    castBars = true,
+    minimap = true,
+    classicTextures = true,
+    classicComboPoints = true,
     hideLevelAlert = false,
-    debug = false,
+    settingsRevision = 2,
   },
 }
+
+local SETTINGS_REVISION = 2
 
 local function CopyDefaults(src, dst)
   if type(src) ~= "table" then
@@ -36,18 +39,38 @@ local function CopyDefaults(src, dst)
   return dst
 end
 
+local function EnsureProfile()
+  local db = _G.ForeverClassicUIDB
+  if type(db) ~= "table" then
+    db = {}
+    _G.ForeverClassicUIDB = db
+  end
+  CopyDefaults(defaults, db)
+  if type(db.profile) ~= "table" then
+    db.profile = CopyDefaults(defaults.profile, {})
+  end
+
+  local profile = db.profile
+  local rev = tonumber(profile.settingsRevision) or 0
+  if rev < SETTINGS_REVISION then
+    for key, value in pairs(defaults.profile) do
+      if key ~= "settingsRevision" then
+        profile[key] = value
+      end
+    end
+    profile.settingsRevision = SETTINGS_REVISION
+  end
+
+  _G.ForeverClassicUIDB = db
+  return profile
+end
+
 function ns.Print(...)
   local parts = { ... }
   for i = 1, #parts do
     parts[i] = tostring(parts[i])
   end
   DEFAULT_CHAT_FRAME:AddMessage("|cffc79c6eForever Classic UI|r: " .. table.concat(parts, " "))
-end
-
-function ns.Debug(...)
-  if ForeverClassicUIDB and ForeverClassicUIDB.profile and ForeverClassicUIDB.profile.debug then
-    ns.Print("|cff888888[debug]|r", ...)
-  end
 end
 
 function ns.RegisterSkin(name, apply)
@@ -97,14 +120,9 @@ function ns.PromptReload()
 end
 
 function ns.SetOption(key, value)
-  if not ns.db then
-    return
-  end
-  -- Always write through ForeverClassicUIDB so SavedVariables stay in sync.
-  ForeverClassicUIDB = ForeverClassicUIDB or {}
-  ForeverClassicUIDB.profile = ForeverClassicUIDB.profile or ns.db
-  ns.db = ForeverClassicUIDB.profile
-  ns.db[key] = value and true or false
+  local profile = EnsureProfile()
+  ns.db = profile
+  profile[key] = value and true or false
   if ns.RefreshEditModeOptions then
     ns.RefreshEditModeOptions()
   end
@@ -130,54 +148,70 @@ function ns.ApplySkins()
     if ns.QueueReconcile then
       ns.QueueReconcile()
     end
-    ns.Debug("skins deferred until combat ends")
     return
   end
 
   ns.layout = ns.DetectLayout()
-  ns.Debug("layout =", ns.layout)
 
-  local order = { "player", "target", "pet", "party", "castbar", "minimap" }
+  local classicKeys = { "player", "target", "pet", "party", "castbar" }
+  local wantClassic = db.enabled and (
+    db.playerFrame or db.targetFrame or db.petFrame or db.partyFrames or db.castBars
+  )
   local needReload = false
-  for i = 1, #order do
-    local name = order[i]
-    local apply = ns.Skins[name]
-    if apply then
-      local want = db.enabled and db[ns.skinOptions[name]]
-      if want then
-        if ns.BeginSkin then
-          ns.BeginSkin(name)
-        end
-        local ok, err = pcall(apply, ns)
-        if ns.EndSkin then
-          ns.EndSkin()
-        end
-        if ok then
-          ns.applied[name] = true
-          ns.compat[name] = nil
-        else
-          ns.applied[name] = false
-          ns.compat[name] = tostring(err)
-          ns.Print("Skin failed:", name, "-", err)
-        end
-      elseif ns.applied[name] then
-        local restored = true
-        if ns.RestoreSkin then
-          local ok, result = pcall(ns.RestoreSkin, name)
-          restored = ok and result ~= false
-          if not ok then
-            ns.Print("Revert failed:", name, "-", result)
-          end
-        end
-        ns.applied[name] = false
-        -- RefreshNative hides addon overlays. Avoid ToPlayerArt/UpdateArt (secret taint).
-        if ns.RefreshNative then
-          pcall(ns.RefreshNative, name)
-        end
-        if not restored then
-          needReload = true
-        end
+  if wantClassic then
+    if ns.BeginSkin then
+      ns.BeginSkin("classic")
+    end
+    local ok, err = pcall(function()
+      ns.ApplyClassicBundle()
+    end)
+    if ns.EndSkin then
+      ns.EndSkin()
+    end
+    if not ok then
+      ns.Print("Classic Frames failed:", tostring(err))
+    end
+    for i = 1, #classicKeys do
+      local name = classicKeys[i]
+      local key = ns.skinOptions[name]
+      if db[key] then
+        ns.applied[name] = ok and true or false
+        ns.compat[name] = ok and nil or tostring(err)
       end
+    end
+  else
+    for i = 1, #classicKeys do
+      local name = classicKeys[i]
+      if ns.applied[name] then
+        ns.applied[name] = false
+        needReload = true
+      end
+    end
+  end
+
+  -- Minimap
+  local minimapApply = ns.Skins.minimap
+  if minimapApply then
+    local want = db.enabled and db.minimap
+    if want then
+      if ns.BeginSkin then
+        ns.BeginSkin("minimap")
+      end
+      local ok, err = pcall(minimapApply, ns)
+      if ns.EndSkin then
+        ns.EndSkin()
+      end
+      if ok then
+        ns.applied.minimap = true
+        ns.compat.minimap = nil
+      else
+        ns.applied.minimap = false
+        ns.compat.minimap = tostring(err)
+        ns.Print("Skin failed: minimap -", err)
+      end
+    elseif ns.applied.minimap then
+      ns.applied.minimap = false
+      needReload = true
     end
   end
 
@@ -191,14 +225,10 @@ local function OnAddonLoaded(_, addonName)
     return
   end
 
-  ForeverClassicUIDB = CopyDefaults(defaults, ForeverClassicUIDB)
-  -- Drop debug probe dumps if an older build wrote them into SV.
-  ForeverClassicUIDB.lastProbe = nil
-  ForeverClassicUIDB.lastGeom = nil
-  ns.db = ForeverClassicUIDB.profile
-  local getMeta = (C_AddOns and C_AddOns.GetAddOnMetadata) or GetAddOnMetadata
-  if getMeta then
-    ns.Version = getMeta(ADDON_NAME, "Version") or ns.Version
+  ns.db = EnsureProfile()
+  if _G.ForeverClassicUIDB then
+    _G.ForeverClassicUIDB.lastProbe = nil
+    _G.ForeverClassicUIDB.lastGeom = nil
   end
 end
 
@@ -242,13 +272,12 @@ end)
 
 if C_EditMode and EventRegistry and EventRegistry.RegisterCallback then
   pcall(function()
-    EventRegistry:RegisterCallback("EditMode.Enter", function()
-      ns.Debug("Edit Mode entered.")
-    end, ADDON_NAME)
     EventRegistry:RegisterCallback("EditMode.Exit", function()
-      if ns.db then
-        ns.ApplySkins()
-      end
+      C_Timer.After(0, function()
+        if ns.db then
+          ns.ApplySkins()
+        end
+      end)
     end, ADDON_NAME)
   end)
 end
@@ -261,7 +290,6 @@ SlashCmdList.FOREVERCLASSICUI = function(msg)
     ns.Print("Commands:")
     print("  /fcui options   - HUD Edit Mode Classic UI checkboxes")
     print("  /fcui status    - show detected layout and applied skins")
-    print("  /fcui debug     - toggle debug chat")
     print("  /fcui reset     - restore default settings")
     return
   end
@@ -286,18 +314,10 @@ SlashCmdList.FOREVERCLASSICUI = function(msg)
     return
   end
 
-  if msg == "debug" then
-    if not ns.db then
-      return
-    end
-    ns.db.debug = not ns.db.debug
-    ns.Print("Debug", ns.db.debug and "on" or "off")
-    return
-  end
-
   if msg == "reset" then
-    ForeverClassicUIDB = CopyDefaults(defaults, {})
-    ns.db = ForeverClassicUIDB.profile
+    _G.ForeverClassicUIDB = CopyDefaults(defaults, {})
+    _G.ForeverClassicUIDB.profile.settingsRevision = SETTINGS_REVISION
+    ns.db = _G.ForeverClassicUIDB.profile
     if ns.RefreshEditModeOptions then
       ns.RefreshEditModeOptions()
     end

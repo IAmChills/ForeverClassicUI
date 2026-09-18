@@ -26,7 +26,6 @@ end
 local function BeginLevelUpWindow(level)
   suppressUntil = GetTime() + SUPPRESS_SECONDS
   suppressLevel = level
-  ns.Debug("Level-up window started.", "level", tostring(level))
 end
 
 local function IsLevelUpEventType(eventType)
@@ -124,7 +123,6 @@ local function TryDismissEventToast()
   end
   After(function()
     if ShouldDismissToast(GetCurrentToastInfo()) then
-      ns.Debug("Dismissing level-up event toast.")
       DismissLevelUpToast()
     end
   end)
@@ -162,7 +160,6 @@ end
 local function HookRaidWarning(frame)
   HookFrame(frame, function(self)
     if ShouldHideRaidWarning() then
-      ns.Debug("Hiding level-up raid warning.")
       self:Hide()
     end
   end)

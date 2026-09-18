@@ -1,7 +1,5 @@
 local ADDON_NAME, ns = ...
 
--- Checkboxes on EditModeManagerFrame. They write SavedVariables and apply immediately.
-
 local CHECKBOX_WIDTH = 225
 local CHECKBOX_HEIGHT = 32
 local SECTION_WIDTH = 450
@@ -33,35 +31,28 @@ local function TryCreate(parent, template, name)
 end
 
 local function SetChecked(box, checked)
+  local wasRefreshing = refreshingChecks
+  refreshingChecks = true
   if box.SetControlChecked then
     box:SetControlChecked(checked and true or false)
-    return
-  end
-  if box.Button and box.Button.SetChecked then
+  elseif box.Button and box.Button.SetChecked then
     box.Button:SetChecked(checked and true or false)
   end
+  refreshingChecks = wasRefreshing
 end
 
 local function WireCallback(box, handler)
-  if box.SetCallback then
-    box:SetCallback(function(isChecked, isUserInput)
-      -- Blizzard refresh calls SetControlChecked without user input.
-      -- Only persist real clicks (isUserInput must be true).
-      if refreshingChecks or not isUserInput then
-        return
-      end
-      handler(isChecked and true or false)
-    end)
+  local button = box.Button or box
+  if not button or not button.HookScript then
     return
   end
-
-  local button = box.Button or box
   button:HookScript("OnClick", function(self)
     if refreshingChecks then
       return
     end
     PlayCheckSound()
-    handler(self.GetChecked and self:GetChecked() and true or false)
+    local checked = self.GetChecked and self:GetChecked() and true or false
+    handler(checked)
   end)
 end
 
@@ -111,19 +102,15 @@ local function CreateFallbackCheckbox(parent)
   end
 
   function frame:SetControlChecked(checked)
+    local wasRefreshing = refreshingChecks
+    refreshingChecks = true
     self.Button:SetChecked(checked)
+    refreshingChecks = wasRefreshing
   end
 
   function frame:IsControlChecked()
     return self.Button:GetChecked()
   end
-
-  button:SetScript("OnClick", function(self)
-    PlayCheckSound()
-    if frame._callback then
-      frame._callback(self:GetChecked(), true)
-    end
-  end)
 
   return frame
 end
@@ -281,15 +268,13 @@ local function Attach()
     section:ClearAllPoints()
     section:SetPoint("TOP", accountSettings.Expander, "BOTTOM", 0, -4)
   end
-
   if accountSettings.Layout then
-    pcall(accountSettings.Layout, accountSettings)
+    C_Timer.After(0, function()
+      if accountSettings and accountSettings.Layout then
+        pcall(accountSettings.Layout, accountSettings)
+      end
+    end)
   end
-  if EditModeManagerFrame.Layout and EditModeManagerFrame:IsShown() then
-    pcall(EditModeManagerFrame.Layout, EditModeManagerFrame)
-  end
-
-  ns.Debug("Edit Mode options attached.")
 end
 
 function ns.OpenEditMode()
@@ -336,8 +321,10 @@ end)
 if EventRegistry and EventRegistry.RegisterCallback then
   pcall(function()
     EventRegistry:RegisterCallback("EditMode.Enter", function()
-      Attach()
-      ns.RefreshEditModeOptions()
+      C_Timer.After(0, function()
+        Attach()
+        ns.RefreshEditModeOptions()
+      end)
     end, ADDON_NAME .. ".EditMode")
   end)
 end

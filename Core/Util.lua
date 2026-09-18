@@ -21,8 +21,19 @@ ns.Art = {
   MinimapBorder = "Interface\\Minimap\\UI-Minimap-Border",
   MinimapZoomInUp = "Interface\\Minimap\\UI-Minimap-ZoomInButton-Up",
   MinimapZoomInDown = "Interface\\Minimap\\UI-Minimap-ZoomInButton-Down",
+  MinimapZoomInDisabled = "Interface\\Minimap\\UI-Minimap-ZoomInButton-Disabled",
   MinimapZoomOutUp = "Interface\\Minimap\\UI-Minimap-ZoomOutButton-Up",
   MinimapZoomOutDown = "Interface\\Minimap\\UI-Minimap-ZoomOutButton-Down",
+  MinimapZoomOutDisabled = "Interface\\Minimap\\UI-Minimap-ZoomOutButton-Disabled",
+  MinimapZoomHighlight = "Interface\\Minimap\\UI-Minimap-ZoomButton-Highlight",
+  MinimapClockBg = "Interface\\TimeManager\\ClockBackground",
+  MinimapTrackingBorder = "Interface\\Minimap\\MiniMap-TrackingBorder",
+  MinimapTrackingNone = "Interface\\Minimap\\Tracking\\None",
+  MinimapNorth = "Interface\\Minimap\\CompassNorthTag",
+  MinimapTOD = "Interface\\Minimap\\UI-TOD-Indicator",
+  MinimapToggleUp = "Interface\\Buttons\\UI-Panel-MinimizeButton-Up",
+  MinimapToggleDown = "Interface\\Buttons\\UI-Panel-MinimizeButton-Down",
+  MinimapToggleHighlight = "Interface\\Buttons\\UI-Panel-MinimizeButton-Highlight",
   PortraitMask = "Interface\\CharacterFrame\\TempPortraitAlphaMask",
   GroupIndicator = "Interface\\CharacterFrame\\UI-CharacterFrame-GroupIndicator",
   LeaderIcon = "Interface\\GroupFrame\\UI-Group-LeaderIcon",
@@ -121,11 +132,58 @@ ns.Layout = {
     -- Classic compass ring used a -2 x nudge; live art also sits high/right.
     borderOffset = { -12, -34 },
     texCoord = { 0.25, 1, 0.125, 0.875 },
+    -- Raise Forever's map container toward the zone banner (default y = -30).
+    containerPoint = { "TOP", 10, -4 },
+    -- Pin banner to cluster top so raising the map doesn't shove it off-screen.
+    borderTop = {
+      size = { 192, 32 },
+      texCoord = { 0.25, 1, 0, 0.125 },
+      relative = "cluster",
+      point = { "TOP", "TOP", 6, 2 },
+    },
+    zoneText = { size = { 140, 12 }, point = { "CENTER", 0, 2 } },
+    -- Toggle sits in the right cap of MinimapBorderTop; nudge up/left vs raw RIGHT.
+    toggle = { size = { 42, 42 }, point = { "CENTER", "RIGHT", -22, 4 }, scaleSize = false, scaleOffset = false },
+    -- Classic zoom slots shifted down/left to sit on Forever's larger ring.
+    zoomIn = { size = { 32, 32 }, point = { "CENTER", 68, -36 } },
+    zoomOut = { size = { 32, 32 }, point = { "CENTER", 42, -64 } },
+    tracking = {
+      size = { 22, 22 },
+      point = { "TOPLEFT", -20, -30 },
+      icon = { 16, 16 },
+      iconOffset = { 2, -3 },
+      border = { 50, 50 },
+    },
+    north = { size = { 16, 16 }, point = { "CENTER", 0, 67 } },
+    -- Classic TOD is ~50px on a 140 map; keep near that visual size on Forever.
+    gameTime = { size = { 65, 65 }, point = { "CENTER", 65, 50 }, scaleSize = false },
+    clock = {
+      size = { 60, 28 },
+      point = { "CENTER", 0, -75 },
+      texCoord = { 0.015625, 0.8125, 0.015625, 0.390625 },
+      textScale = 1.15,
+    },
   },
 }
 function ns.Media(relativePath)
   return ns.MEDIA_ROOT .. relativePath:gsub("/", "\\")
 end
+
+-- Prefer bundled Classic minimap art when present.
+ns.Art.MinimapBorder = ns.Media("Minimap\\ui-minimap-border.blp")
+ns.Art.MinimapZoomInUp = ns.Media("Minimap\\ui-minimap-zoominbutton-up.blp")
+ns.Art.MinimapZoomInDown = ns.Media("Minimap\\ui-minimap-zoominbutton-down.blp")
+ns.Art.MinimapZoomInDisabled = ns.Media("Minimap\\ui-minimap-zoominbutton-disabled.blp")
+ns.Art.MinimapZoomOutUp = ns.Media("Minimap\\ui-minimap-zoomoutbutton-up.blp")
+ns.Art.MinimapZoomOutDown = ns.Media("Minimap\\ui-minimap-zoomoutbutton-down.blp")
+ns.Art.MinimapZoomOutDisabled = ns.Media("Minimap\\ui-minimap-zoomoutbutton-disabled.blp")
+ns.Art.MinimapZoomHighlight = ns.Media("Minimap\\ui-minimap-zoombutton-highlight.blp")
+ns.Art.MinimapClockBg = ns.Media("Minimap\\clockbackground.blp")
+ns.Art.MinimapTrackingBorder = ns.Media("Minimap\\minimap-trackingborder.blp")
+ns.Art.MinimapTrackingNone = ns.Media("Minimap\\tracking-none.blp")
+ns.Art.MinimapNorth = ns.Media("Minimap\\compassnorthtag.blp")
+ns.Art.MinimapTOD = ns.Media("Minimap\\ui-tod-indicator.blp")
+ns.Art.MinimapMail = ns.Media("Minimap\\mail.blp")
 
 function ns.TextureExists(path)
   if not path then

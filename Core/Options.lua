@@ -29,9 +29,7 @@ local function MakeCheckbox(parent, option, index)
     else
       ns.db[option.key] = checked
     end
-    if option.key ~= "debug" then
-      ns.Print("Saved.", option.label, checked and "on" or "off")
-    end
+    ns.Print("Saved.", option.label, checked and "on" or "off")
   end)
   box:SetScript("OnShow", function(self)
     self:SetChecked(ns.db and ns.db[option.key])

@@ -2,14 +2,15 @@ local _, ns = ...
 
 ns.Defaults = {
   enabled = true,
-  playerFrame = false,
-  targetFrame = false,
-  petFrame = false,
-  partyFrames = false,
-  castBars = false,
-  minimap = false,
-  hideLevelAlert = false,
-  debug = false,
+  playerFrame = true,
+  targetFrame = true,
+  petFrame = true,
+  partyFrames = true,
+  castBars = true,
+  minimap = true,
+  classicTextures = true,
+  classicComboPoints = true,
+  hideLevelAlert = true,
 }
 
 ns.OptionMeta = {
@@ -20,51 +21,46 @@ ns.OptionMeta = {
   },
   {
     key = "playerFrame",
-    label = "Player Frame",
-    help = "Restyle the player unit frame to Classic art and layout. Uncheck restores Forever's look. Changes wait if you are in combat.",
+    label = "Classic Frames",
+    help = "Classic player, target, focus, ToT, pet, and party frames with classic health/mana textures and combo points. Uncheck requires /reload.",
     editMode = true,
   },
   {
     key = "targetFrame",
     label = "Target and Focus",
-    help = "Restyle target and focus frames, including target-of-target. Uncheck restores Forever's look.",
+    help = "Enables the full Classic Frames suite. Uncheck requires /reload.",
     editMode = true,
   },
   {
     key = "petFrame",
     label = "Pet Frame",
-    help = "Restyle the pet unit frame. Uncheck restores Forever's look.",
+    help = "Enables the full Classic Frames suite. Uncheck requires /reload.",
     editMode = true,
   },
   {
     key = "partyFrames",
     label = "Party Frames",
-    help = "Restyle party member frames. Uncheck restores Forever's look. Vehicle party art is left alone.",
+    help = "Enables the full Classic Frames suite. Uncheck requires /reload.",
     editMode = true,
   },
   {
     key = "castBars",
-    label = "Cast Bar",
-    help = "Restyle player, target, and focus cast bars. Uncheck restores Forever's look.",
+    label = "Classic Cast Bars",
+    help = "Classic cast bar art for player, target, and focus. Uncheck requires /reload.",
     editMode = true,
   },
   {
     key = "minimap",
     label = "Minimap",
-    help = "Apply Classic minimap border and zoom buttons. Uncheck restores Forever's look.",
+    help = "Classic minimap border and zoom buttons. Uncheck restores Forever's look.",
     editMode = true,
   },
   {
     key = "hideLevelAlert",
-    label = "Level Alert",
+    label = "Disable Level Alert",
     help = "Hide the center banner when you level up. Raid warnings and other alerts still show.",
     editMode = true,
     live = true,
-  },
-  {
-    key = "debug",
-    label = "Debug chat",
-    help = "Print extra diagnostics while skins apply.",
   },
 }
 

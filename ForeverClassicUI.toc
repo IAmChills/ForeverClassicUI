@@ -1,4 +1,4 @@
-﻿## Interface: 16001
+## Interface: 16001
 ## Title: Forever Classic UI
 ## Notes: Restores Classic unit frames, cast bars, and HUD chrome in World of Warcraft Forever.
 ## Author: Chills
@@ -18,7 +18,17 @@ Core\Config.lua
 Core\EditMode.lua
 Core\LevelAlert.lua
 
-# Skins
+# Classic frames
+Core\ClassicBootstrap.lua
+Core\ClassicNames.lua
+Vendor\Classic\classicCombo.lua
+Vendor\Classic\classicTextures.lua
+Vendor\Classic\classicCastbars.lua
+Vendor\Classic\camelotFrames.lua
+Vendor\Classic\classicFrames.lua
+Core\ClassicApply.lua
+
+# Edit Mode entry points + our minimap
 Skins\PlayerFrame.lua
 Skins\TargetFrame.lua
 Skins\PetFrame.lua
@@ -26,5 +36,4 @@ Skins\PartyFrame.lua
 Skins\CastBar.lua
 Skins\Minimap.lua
 
-# Options last so skins can register themselves first
 Core\Options.lua

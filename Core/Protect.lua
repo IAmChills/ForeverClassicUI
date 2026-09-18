@@ -534,7 +534,6 @@ function ns.SafeHook(target, method, handler)
   local wrapped = function(...)
     local ok, err = pcall(hookfn, ...)
     if not ok then
-      ns.Debug("hook error:", err)
       ns.QueueReconcile()
     end
   end
@@ -548,8 +547,19 @@ end
 function ns.RefreshNative(name)
   -- Do not call Blizzard unit-frame art functions here. ToPlayerArt / UpdateArt /
   -- CheckClassification re-enter UnitFrameHealthBar_Update with secret values.
-  if name == "minimap" and ns._classicMinimapBorder then
-    pcall(ns._classicMinimapBorder.Hide, ns._classicMinimapBorder)
+  if name == "minimap" then
+    if ns._classicMinimapBorder then
+      pcall(ns._classicMinimapBorder.Hide, ns._classicMinimapBorder)
+    end
+    if ns._classicMinimapBorderTop then
+      pcall(ns._classicMinimapBorderTop.Hide, ns._classicMinimapBorderTop)
+    end
+    if ns._classicMinimapNorth then
+      pcall(ns._classicMinimapNorth.Hide, ns._classicMinimapNorth)
+    end
+    if ns._classicMinimapToggle and ns._classicMinimapToggle ~= _G.MinimapToggleButton then
+      pcall(ns._classicMinimapToggle.Hide, ns._classicMinimapToggle)
+    end
   end
   if name == "player" and PlayerFrame and PlayerFrame.PlayerFrameContainer then
     local c = PlayerFrame.PlayerFrameContainer

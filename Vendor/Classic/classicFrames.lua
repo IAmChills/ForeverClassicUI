@@ -794,9 +794,9 @@ local function MakeClassicFrame(frame)
             -- Match Forever health bar size (124 x 20); default mana is 124 x 10.
             local health = hpContainer.HealthBar
             local hw, hh = health:GetSize()
-            manaBar:SetSize(hw -5, hh -5)
+            manaBar:SetSize(hw -5, hh -10)
             manaBar:ClearAllPoints()
-            manaBar:SetPoint("TOPLEFT", health, "BOTTOMLEFT", 2, 5)
+            manaBar:SetPoint("TOPLEFT", health, "BOTTOMLEFT", 2, 0)
             if manaBar.FullPowerFrame then
                 manaBar.FullPowerFrame:SetSize(hw, hh)
             end
@@ -1116,15 +1116,40 @@ local function MakeClassicPartyFrame()
         overlay.Status:SetPoint("TOPLEFT", -10.5, 2.5)
 
 
-        overlay.LeaderIcon:SetSize(14,14)
-        --AdjustFramePoint(overlay.LeaderIcon, nil, -6)
-        overlay.LeaderIcon:SetPoint("BOTTOM", overlay, "TOP", -10, -6)
+        overlay.LeaderIcon:ClearAllPoints()
+        overlay.LeaderIcon:SetSize(16, 16)
+        if overlay.LeaderIcon.SetAtlas then
+            overlay.LeaderIcon:SetAtlas(nil)
+        end
+        overlay.LeaderIcon:SetTexture("Interface\\GroupFrame\\UI-Group-LeaderIcon")
+        overlay.LeaderIcon:SetTexCoord(0, 1, 0, 1)
+        -- Forever default BOTTOM/TOP -10,-6; nudge left 5 and down 5.
+        overlay.LeaderIcon:SetPoint("BOTTOM", overlay, "TOP", -15, -11)
+        if overlay.GuideIcon then
+            overlay.GuideIcon:ClearAllPoints()
+            overlay.GuideIcon:SetSize(16, 16)
+            overlay.GuideIcon:SetPoint("BOTTOM", overlay, "TOP", -15, -11)
+        end
         overlay.RoleIcon:ClearAllPoints()
         overlay.RoleIcon:SetPoint("BOTTOMLEFT", 8, 10)
         overlay.PVPIcon:SetParent(FCUI.hiddenFrame)
 
         --AdjustFramePoint(hpContainer.HealthBarMask, nil, -3)
         hpContainer.HealthBarMask:SetPoint("TOPLEFT", hpContainer.HealthBar, "TOPLEFT", -29, 0)
+
+        -- Forever party mana is 7px; match health height so it fills the classic slot.
+        local health = hpContainer.HealthBar
+        local hw, hh = health:GetSize()
+        if hw and hh and hw > 0 and hh > 0 then
+            manaBar:SetSize(hw, hh)
+        else
+            manaBar:SetHeight(5)
+        end
+        manaBar:ClearAllPoints()
+        manaBar:SetPoint("TOPLEFT", frame, "TOPLEFT", 45, -25)
+        if manaBar.ManaBarMask then
+            manaBar.ManaBarMask:Hide()
+        end
 
         frame.Background = frame:CreateTexture(nil, "BACKGROUND")
         frame.Background:SetColorTexture(0,0,0,0.45)
@@ -1162,6 +1187,19 @@ local function MakeClassicPartyFrame()
 
             --AdjustFramePoint(frame.HealthBarContainer.HealthBarMask, nil, -3)
             hpContainer.HealthBarMask:SetPoint("TOPLEFT", frame.HealthBarContainer.HealthBar, "TOPLEFT", -29, 0)
+
+            local health = hpContainer.HealthBar
+            local hw, hh = health:GetSize()
+            if hw and hh and hw > 0 and hh > 0 then
+                manaBar:SetSize(hw, hh)
+            else
+                manaBar:SetHeight(5)
+            end
+            manaBar:ClearAllPoints()
+            manaBar:SetPoint("TOPLEFT", frame, "TOPLEFT", 45, -25)
+            if manaBar.ManaBarMask then
+                manaBar.ManaBarMask:Hide()
+            end
 
             hpContainer.CenterText:ClearAllPoints()
             hpContainer.CenterText:SetPoint("CENTER", hpContainer, "CENTER", 2, -2)

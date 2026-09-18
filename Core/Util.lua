@@ -156,7 +156,7 @@ ns.Layout = {
     },
     north = { size = { 16, 16 }, point = { "CENTER", 0, 67 } },
     -- Classic TOD is ~50px on a 140 map; keep near that visual size on Forever.
-    gameTime = { size = { 65, 65 }, point = { "CENTER", 65, 50 }, scaleSize = false },
+    gameTime = { size = { 58, 58 }, point = { "CENTER", 65, 48 }, scaleSize = false },
     clock = {
       size = { 60, 28 },
       point = { "CENTER", 0, -75 },

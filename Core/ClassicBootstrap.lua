@@ -111,31 +111,21 @@ EnsureDBDefaults()
 
 function ns.SyncClassicDBFromProfile()
   EnsureDBDefaults()
-  local profile = ns.db or {}
-  local enabled = profile.enabled and true or false
-  local framesOn = enabled and (profile.playerFrame or profile.targetFrame or profile.petFrame or profile.partyFrames)
-  local castOn = enabled and profile.castBars
-  local texturesOn = framesOn and profile.classicTextures ~= false
-  local comboOn = framesOn and profile.classicComboPoints ~= false
-
-  FCUIClassicDB.classicFrames = framesOn and true or false
-  FCUIClassicDB.classicCastbars = castOn and true or false
-  FCUIClassicDB.classicCastbarsPlayer = castOn and true or false
+  FCUIClassicDB.classicFrames = true
+  FCUIClassicDB.classicCastbars = true
+  FCUIClassicDB.classicCastbarsPlayer = true
   FCUIClassicDB.classicCastbarsPlayerBorder = true
-  FCUIClassicDB.changeUnitFrameHealthbarTexture = texturesOn and true or false
-  FCUIClassicDB.changeUnitFrameManabarTexture = texturesOn and true or false
-  FCUIClassicDB.enableLegacyComboPoints = comboOn and true or false
-
-  if framesOn then
-    FCUIClassicDB.targetToTAnchor = "BOTTOMRIGHT"
-    FCUIClassicDB.focusToTAnchor = "BOTTOMRIGHT"
-    FCUIClassicDB.targetToTXPos = -1
-    FCUIClassicDB.targetToTYPos = 17
-    FCUIClassicDB.focusToTXPos = -1
-    FCUIClassicDB.focusToTYPos = 17
-    FCUIClassicDB.targetToTScale = 0.97
-    FCUIClassicDB.focusToTScale = 0.97
-  end
+  FCUIClassicDB.changeUnitFrameHealthbarTexture = true
+  FCUIClassicDB.changeUnitFrameManabarTexture = true
+  FCUIClassicDB.enableLegacyComboPoints = true
+  FCUIClassicDB.targetToTAnchor = "BOTTOMRIGHT"
+  FCUIClassicDB.focusToTAnchor = "BOTTOMRIGHT"
+  FCUIClassicDB.targetToTXPos = -1
+  FCUIClassicDB.targetToTYPos = 17
+  FCUIClassicDB.focusToTXPos = -1
+  FCUIClassicDB.focusToTYPos = 17
+  FCUIClassicDB.targetToTScale = 0.97
+  FCUIClassicDB.focusToTScale = 0.97
 end
 
 function FCUI.UpdateLegacyComboPosition() end

@@ -16,7 +16,7 @@ local hookedShow = {}
 local hookedDisplay = {}
 
 local function ShouldHide()
-  return ns.db and ns.db.hideLevelAlert
+  return true
 end
 
 local function InLevelUpWindow()

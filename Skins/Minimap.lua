@@ -1,7 +1,7 @@
 local _, ns = ...
 
 local function SkinOn()
-  return ns.db and ns.db.minimap and true or false
+  return true
 end
 
 local function MapScale()
@@ -539,9 +539,20 @@ local function StyleClock(scale)
     ns.SetPoint(ticker, "CENTER", clock, "CENTER", 1 * scale, 0)
     local textScale = layout.textScale or 1
     if textScale ~= 1 and ticker.GetFont and ticker.SetFont then
-      local font, height, flags = ticker:GetFont()
-      if font and height then
-        pcall(ticker.SetFont, ticker, font, height * textScale, flags)
+      if not ticker.fcuiBaseFontHeight then
+        local font, height, flags = ticker:GetFont()
+        ticker.fcuiBaseFont = font
+        ticker.fcuiBaseFontHeight = height
+        ticker.fcuiBaseFontFlags = flags
+      end
+      if ticker.fcuiBaseFont and ticker.fcuiBaseFontHeight then
+        pcall(
+          ticker.SetFont,
+          ticker,
+          ticker.fcuiBaseFont,
+          ticker.fcuiBaseFontHeight * textScale,
+          ticker.fcuiBaseFontFlags
+        )
       end
     end
   end
@@ -626,12 +637,12 @@ local function Apply()
   StyleNorth(scale)
   StyleMail(scale)
 
-  -- Keep Forever coords under the clock instead of overlapping it.
+  -- Forever coords: sit snug under the map (above the Classic clock).
   local coords = ns.GetPath(cluster, "MinimapContainer.PlayerCoords")
   if coords then
     ns.Capture(coords)
     ns.ClearAllPoints(coords)
-    ns.SetPoint(coords, "TOP", Minimap, "BOTTOM", 0, -18 * scale)
+    ns.SetPoint(coords, "TOP", Minimap, "BOTTOM", 0, 15 * scale)
   end
 end
 

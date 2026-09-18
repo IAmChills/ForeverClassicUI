@@ -327,8 +327,13 @@ local function MakeClassicFrame(frame)
 
             SetXYPoint(hpContainer.HealthBarMask, 1, -6)
             hpContainer.HealthBarMask:SetSize(125, 17)
-            manaBar.ManaBarMask:SetSize(253, 22)
-            SetXYPoint(manaBar.ManaBarMask, -59, 3)
+            -- Match Forever health bar size (124–126 x 20); default mana is half-height and wider.
+            local health = hpContainer.HealthBar
+            local hw, hh = health:GetSize()
+            manaBar:SetSize(hw -5, hh -5)
+            manaBar:ClearAllPoints()
+            manaBar:SetPoint("TOPLEFT", health, "BOTTOMLEFT", 2, 5)
+            manaBar.ManaBarMask:Hide()
 
             frame.ClassicFrame.Texture:ClearAllPoints()
             frame.ClassicFrame.Texture:SetPoint("TOPLEFT", 20, -8)
@@ -394,19 +399,18 @@ local function MakeClassicFrame(frame)
         end)
 
         hooksecurefunc(frame, "CheckFaction", function(self)
+            if FCUI.ApplyTargetClassicPvp then
+                FCUI.ApplyTargetClassicPvp(self)
+            end
             if (self.showPVP) then
-                local factionGroup = UnitFactionGroup(self.unit)
-                if (factionGroup == "Alliance") then
-                    contentContext.PvpIcon:ClearAllPoints()
-                    contentContext.PvpIcon:SetPoint("TOPRIGHT", -4, -24)
-                elseif (factionGroup == "Horde") then
-                    contentContext.PvpIcon:ClearAllPoints()
-                    contentContext.PvpIcon:SetPoint("TOPRIGHT", 3, -22)
-                end
                 contentContext.PrestigePortrait:ClearAllPoints()
                 contentContext.PrestigePortrait:SetPoint("TOPRIGHT", 5, -17)
             end
         end)
+
+        if FCUI.ApplyTargetClassicPvp then
+            FCUI.ApplyTargetClassicPvp(frame)
+        end
 
         if db.classicFramesDesaturated or db.classColorFrameTexture then
             frame.ClassicFrame.Texture:SetDesaturated(true)
@@ -570,6 +574,11 @@ local function MakeClassicFrame(frame)
                 contentContext.PvpTimerText:ClearAllPoints()
                 contentContext.PvpTimerText:SetPoint("BOTTOMLEFT", 8, 8)
             end)
+        end
+
+        -- Apply Classic PvP badge immediately (circle hidden, Classic faction art).
+        if PlayerFrame_UpdatePvPStatus then
+            PlayerFrame_UpdatePvPStatus()
         end
 
         local function GetFrameColor()
@@ -782,8 +791,18 @@ local function MakeClassicFrame(frame)
             hpContainer.HealthBarMask:SetPoint("TOPLEFT", hpContainer.HealthBar, "TOPLEFT", -2, -6)
             hpContainer.HealthBarMask:SetSize(126, 17)
 
-            manaBar.ManaBarMask:SetSize(126, 22)
-            manaBar.ManaBarMask:SetPoint("TOPLEFT", manaBar, "TOPLEFT", -2, 5)
+            -- Match Forever health bar size (124 x 20); default mana is 124 x 10.
+            local health = hpContainer.HealthBar
+            local hw, hh = health:GetSize()
+            manaBar:SetSize(hw -5, hh -5)
+            manaBar:ClearAllPoints()
+            manaBar:SetPoint("TOPLEFT", health, "BOTTOMLEFT", 2, 5)
+            if manaBar.FullPowerFrame then
+                manaBar.FullPowerFrame:SetSize(hw, hh)
+            end
+            if manaBar.ManaBarMask then
+                manaBar.ManaBarMask:Hide()
+            end
 
             frameContainer.FrameTexture:ClearAllPoints()
             frameContainer.FrameTexture:SetPoint("TOPLEFT", -19, 7)

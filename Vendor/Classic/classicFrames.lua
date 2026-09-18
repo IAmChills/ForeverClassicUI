@@ -68,14 +68,11 @@ local function MakeClassicFrame(frame)
     end
 
     local ClassResourceFrames = {
-        ROGUE      = RogueComboPointBarFrame,
-        DRUID      = DruidComboPointBarFrame,
-        WARLOCK    = WarlockPowerFrame,
-        MAGE       = MageArcaneChargesFrame,
-        MONK       = MonkHarmonyBarFrame,
-        EVOKER     = EssencePlayerFrame,
-        PALADIN    = PaladinPowerBarFrame,
-        DEATHKNIGHT = RuneFrame,
+        ROGUE   = RogueComboPointBarFrame,
+        DRUID   = DruidComboPointBarFrame,
+        WARLOCK = WarlockPowerFrame,
+        MAGE    = MageArcaneChargesFrame,
+        PALADIN = PaladinPowerBarFrame,
     }
     local classFrame = ClassResourceFrames[class]
 
@@ -469,8 +466,6 @@ local function MakeClassicFrame(frame)
         local resourceFrameAnchorPositions = {
             default = {point = "TOP", relativePoint = "BOTTOM", xOffset = 30, yOffset = 25},
             [102] = {point = "TOP", relativePoint = "BOTTOM", xOffset = 30, yOffset = 15}, -- Balance Druid
-            [268] = {point = "TOP", relativePoint = "BOTTOM", xOffset = 30, yOffset = 15}, -- Brewmaster Monk
-            [1473] = {point = "TOP", relativePoint = "BOTTOM", xOffset = 30, yOffset = 25}, -- Augmentation Evoker
         }
 
         frame.ClassicFrame.Background = frame:CreateTexture(nil, "BACKGROUND")
@@ -482,34 +477,6 @@ local function MakeClassicFrame(frame)
             frame.ClassicFrame.Background:SetPoint("TOPLEFT", hpContainer.HealthBar, "TOPLEFT", 0, BigPlayerHealthbar() and 0 or 11)
             frame.ClassicFrame.Background:SetPoint("BOTTOMRIGHT", hpContainer, "BOTTOMRIGHT", BigPlayerHealthbar() and 0 or -2, BigPlayerHealthbarNoMana() and -1 or -11)
         end
-
-
-        C_Timer.After(1, function()
-            local bd = BigDebuffsplayerUnitFrame
-            local oa = C_AddOns.IsAddOnLoaded("OmniAuras")
-            if bd then
-                if bd.mask then
-                    bd.mask:SetTexture("Interface/CHARACTERFRAME/TempPortraitAlphaMask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-                elseif bd.icon then
-                    bd.mask = bd:CreateMaskTexture()
-                    bd.mask:SetAllPoints(bd.icon)
-                    bd.mask:SetTexture("Interface/CHARACTERFRAME/TempPortraitAlphaMask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-                    bd.icon:AddMaskTexture(bd.mask)
-                end
-            end
-            if oa then
-                for _, child in ipairs({PlayerFrame.PlayerFrameContainer:GetChildren()}) do
-                    if child:IsObjectType("Button") then
-                        local mask = child.mask
-                        if mask and mask.SetTexture then
-                            mask:SetTexture("Interface/CHARACTERFRAME/TempPortraitAlphaMask", "CLAMPTOBLACKADDITIVE", "CLAMPTOBLACKADDITIVE")
-                            break
-                        end
-                    end
-                end
-            end
-        end)
-
 
         local function AdjustStatusBarText()
             local hpTextYOffset = 2.8
@@ -629,28 +596,17 @@ local function MakeClassicFrame(frame)
 
         local DEFAULT_X, DEFAULT_Y = 29, 28.5
         local resourceFramePositions = {
-            EVOKER = {x = 28, y = 31, scale = 1.05, specs = {[1473] = { x = 29, y = 23, scale = 1 }}},
             WARRIOR = { x = 28, y = 30 },
-            ROGUE   = { x = 48, y = 38, scale = 0.85},
-            MAGE = { x = 32, y = 32, scale = 0.95 },
+            ROGUE   = { x = 48, y = 38, scale = 0.85 },
+            MAGE    = { x = 32, y = 32, scale = 0.95 },
             PALADIN = { scale = 0.91 },
-            DEATHKNIGHT = { x = 35, y = 34, scale = 0.90 },
-            DRUID = { x = 31, y = 30},
-            MONK = { x = 29.5, y = 31, scale = 0.96 },
+            DRUID   = { x = 31, y = 30 },
         }
 
         local function GetPlayerClassAndSpecPosition()
-            local specID = FCUI.GetSpecialization() and FCUI.GetSpecializationInfo(FCUI.GetSpecialization())
             local position = resourceFramePositions[class]
 
             if position then
-                if position.specs and specID and position.specs[specID] then
-                    local specData = position.specs[specID]
-                    local x = specData.x or DEFAULT_X
-                    local y = specData.y or DEFAULT_Y
-                    local scale = specData.scale or 1
-                    return x, y, scale
-                end
                 local x = position.x or DEFAULT_X
                 local y = position.y or DEFAULT_Y
                 local scale = position.scale or 1
@@ -661,16 +617,13 @@ local function MakeClassicFrame(frame)
         end
 
         local classConflicts = {
-            ROGUE = db.moveResourceToTargetRogue,
-            DRUID = db.moveResourceToTargetDruid,
+            ROGUE   = db.moveResourceToTargetRogue,
+            DRUID   = db.moveResourceToTargetDruid,
             WARLOCK = db.moveResourceToTargetWarlock,
-            MAGE = db.moveResourceToTargetMage,
-            MONK = db.moveResourceToTargetMonk,
-            EVOKER = db.moveResourceToTargetEvoker,
+            MAGE    = db.moveResourceToTargetMage,
             PALADIN = db.moveResourceToTargetPaladin,
-            DEATHKNIGHT = db.moveResourceToTargetDK,
-            SHAMAN      = db.moveResourceToTargetShaman,
-            HUNTER      = db.moveResourceToTargetHunter,
+            SHAMAN  = db.moveResourceToTargetShaman,
+            HUNTER  = db.moveResourceToTargetHunter,
         }
 
         local function UpdateResourcePosition(rogueCheck)
@@ -1086,139 +1039,11 @@ local function AdjustAlternateBars()
         AlternatePowerBar.PowerBarMask:SetPoint("TOPLEFT", AlternatePowerBar, "TOPLEFT", -2, 3)
     end
 
-    if class == "MONK" and MonkStaggerBar then
-        MonkStaggerBar:SetSize(94, 12)
-        MonkStaggerBar:ClearAllPoints()
-        MonkStaggerBar:SetPoint("TOPLEFT", PlayerFrameAlternatePowerBarArea, "TOPLEFT", 101, -72)
-
-        MonkStaggerBar.PowerBarMask:Hide()
-
-        if MonkStaggerBarText then MonkStaggerBarText:SetPoint("CENTER", 1, -1) end
-        MonkStaggerBar.LeftText:SetPoint("LEFT", 0, -1)
-        MonkStaggerBar.RightText:SetPoint("RIGHT", 0, -1)
-
-        MonkStaggerBar.Background = MonkStaggerBar:CreateTexture(nil, "BACKGROUND")
-        MonkStaggerBar.Background:SetSize(128, 16)
-        MonkStaggerBar.Background:SetTexture("Interface\\PlayerFrame\\MonkManaBar")
-        MonkStaggerBar.Background:SetTexCoord(0, 1, 0.5, 1)
-        MonkStaggerBar.Background:SetPoint("TOPLEFT", -17, 0)
-
-        MonkStaggerBar.Border = MonkStaggerBar:CreateTexture(nil, "OVERLAY")
-        MonkStaggerBar.Border:SetSize(128, 16)
-        MonkStaggerBar.Border:SetTexture("Interface\\PlayerFrame\\MonkManaBar")
-        MonkStaggerBar.Border:SetTexCoord(0, 1, 0, 0.5)
-        MonkStaggerBar.Border:SetPoint("TOPLEFT", -17, 0)
-
-        FCUI.ApplyTextureChange("mana", MonkStaggerBar, nil, true, false, true)
-    end
-
-    -- if class == "DRUID" then
-    --     C_Timer.After(1, function()
-    --         FCUI.CreateAltManaBar() --allow time for specID not to be nil cuz yea
-    --     end)
-    -- end
-
-
-    if class == "EVOKER" and EvokerEbonMightBar then
-        EvokerEbonMightBar:SetSize(altBarWidth, 12)
-        EvokerEbonMightBar:ClearAllPoints()
-        EvokerEbonMightBar:SetPoint("BOTTOMLEFT", 95, 17)
-
-        if EvokerEbonMightBarText then EvokerEbonMightBarText:SetPoint("CENTER", 1, -1) end
-        EvokerEbonMightBar.LeftText:SetPoint("LEFT", 0, -1)
-        EvokerEbonMightBar.RightText:SetPoint("RIGHT", 0, -1)
-
-        EvokerEbonMightBar.Background = EvokerEbonMightBar:CreateTexture(nil, "BACKGROUND")
-        EvokerEbonMightBar.Background:SetAllPoints()
-        EvokerEbonMightBar.Background:SetColorTexture(0, 0, 0, 0.5)
-
-        EvokerEbonMightBar.Border = EvokerEbonMightBar:CreateTexture(nil, "OVERLAY")
-        EvokerEbonMightBar.Border:SetSize(0, 16)
-        EvokerEbonMightBar.Border:SetTexture("Interface\\CharacterFrame\\UI-CharacterFrame-GroupIndicator")
-        EvokerEbonMightBar.Border:SetTexCoord(0.125, 0.250, 1, 0)
-        EvokerEbonMightBar.Border:SetPoint("TOPLEFT", 4, 0)
-        EvokerEbonMightBar.Border:SetPoint("TOPRIGHT", -4, 0)
-
-        EvokerEbonMightBar.LeftBorder = EvokerEbonMightBar:CreateTexture(nil, "OVERLAY")
-        EvokerEbonMightBar.LeftBorder:SetSize(16, 16)
-        EvokerEbonMightBar.LeftBorder:SetTexture("Interface\\CharacterFrame\\UI-CharacterFrame-GroupIndicator")
-        EvokerEbonMightBar.LeftBorder:SetTexCoord(0, 0.125, 1, 0)
-        EvokerEbonMightBar.LeftBorder:SetPoint("RIGHT", EvokerEbonMightBar.Border, "LEFT")
-
-        EvokerEbonMightBar.RightBorder = EvokerEbonMightBar:CreateTexture(nil, "OVERLAY")
-        EvokerEbonMightBar.RightBorder:SetSize(16, 16)
-        EvokerEbonMightBar.RightBorder:SetTexture("Interface\\CharacterFrame\\UI-CharacterFrame-GroupIndicator")
-        EvokerEbonMightBar.RightBorder:SetTexCoord(0.125, 0, 1, 0)
-        EvokerEbonMightBar.RightBorder:SetPoint("LEFT", EvokerEbonMightBar.Border, "RIGHT")
-
-        FCUI.ApplyTextureChange("mana", EvokerEbonMightBar, nil, true, false, true)
-        if EvokerEbonMightBar.PowerBarMask then
-            EvokerEbonMightBar.PowerBarMask:Hide()
-        end
-    end
-
-    if class == "DEMONHUNTER" and DemonHunterSoulFragmentsBar then
-        DemonHunterSoulFragmentsBar:SetSize(altBarWidth, 12)
-        DemonHunterSoulFragmentsBar:ClearAllPoints()
-        DemonHunterSoulFragmentsBar:SetPoint("BOTTOMLEFT", 95, 17)
-
-        if DemonHunterSoulFragmentsBar.TextString then
-            DemonHunterSoulFragmentsBar.TextString:SetPoint("CENTER", 1, -1)
-        end
-        if DemonHunterSoulFragmentsBar.LeftText then
-            DemonHunterSoulFragmentsBar.LeftText:SetPoint("LEFT", 0, -1)
-        end
-        if DemonHunterSoulFragmentsBar.RightText then
-            DemonHunterSoulFragmentsBar.RightText:SetPoint("RIGHT", 0, -1)
-        end
-
-        DemonHunterSoulFragmentsBar.Background = DemonHunterSoulFragmentsBar:CreateTexture(nil, "BACKGROUND")
-        DemonHunterSoulFragmentsBar.Background:SetAllPoints()
-        DemonHunterSoulFragmentsBar.Background:SetColorTexture(0, 0, 0, 0.5)
-
-        DemonHunterSoulFragmentsBar.Border = DemonHunterSoulFragmentsBar:CreateTexture(nil, "OVERLAY")
-        DemonHunterSoulFragmentsBar.Border:SetSize(0, 16)
-        DemonHunterSoulFragmentsBar.Border:SetTexture("Interface\\CharacterFrame\\UI-CharacterFrame-GroupIndicator")
-        DemonHunterSoulFragmentsBar.Border:SetTexCoord(0.125, 0.250, 1, 0)
-        DemonHunterSoulFragmentsBar.Border:SetPoint("TOPLEFT", 4, 0)
-        DemonHunterSoulFragmentsBar.Border:SetPoint("TOPRIGHT", -4, 0)
-
-        DemonHunterSoulFragmentsBar.LeftBorder = DemonHunterSoulFragmentsBar:CreateTexture(nil, "OVERLAY")
-        DemonHunterSoulFragmentsBar.LeftBorder:SetSize(16, 16)
-        DemonHunterSoulFragmentsBar.LeftBorder:SetTexture("Interface\\CharacterFrame\\UI-CharacterFrame-GroupIndicator")
-        DemonHunterSoulFragmentsBar.LeftBorder:SetTexCoord(0, 0.125, 1, 0)
-        DemonHunterSoulFragmentsBar.LeftBorder:SetPoint("RIGHT", DemonHunterSoulFragmentsBar.Border, "LEFT")
-
-        DemonHunterSoulFragmentsBar.RightBorder = DemonHunterSoulFragmentsBar:CreateTexture(nil, "OVERLAY")
-        DemonHunterSoulFragmentsBar.RightBorder:SetSize(16, 16)
-        DemonHunterSoulFragmentsBar.RightBorder:SetTexture("Interface\\CharacterFrame\\UI-CharacterFrame-GroupIndicator")
-        DemonHunterSoulFragmentsBar.RightBorder:SetTexCoord(0.125, 0, 1, 0)
-        DemonHunterSoulFragmentsBar.RightBorder:SetPoint("LEFT", DemonHunterSoulFragmentsBar.Border, "RIGHT")
-
-        DemonHunterSoulFragmentsBar.CollapsingStarBackground:SetSize(altBarWidth, 12)
-        DemonHunterSoulFragmentsBar.Glow:SetSize(altBarWidth, 12)
-        DemonHunterSoulFragmentsBar.Ready:SetSize(altBarWidth, 12)
-        DemonHunterSoulFragmentsBar.Deplete:SetSize(altBarWidth, 12)
-        DemonHunterSoulFragmentsBar.CollapsingStarDepleteFin:SetSize(altBarWidth, 12)
-
-        FCUI.ApplyTextureChange("mana", DemonHunterSoulFragmentsBar, nil, true, false, true)
-    end
-
     local classicFrameColorTargets = {
         AlternatePowerBar.Border,
         AlternatePowerBar.LeftBorder,
         AlternatePowerBar.RightBorder,
     }
-
-    if class == "MONK" and MonkStaggerBar and MonkStaggerBar.Border then
-        tinsert(classicFrameColorTargets, MonkStaggerBar.Border)
-    end
-
-    if class == "EVOKER" and EvokerEbonMightBar and EvokerEbonMightBar.Border then
-        tinsert(classicFrameColorTargets, EvokerEbonMightBar.Border)
-        tinsert(classicFrameColorTargets, EvokerEbonMightBar.LeftBorder)
-        tinsert(classicFrameColorTargets, EvokerEbonMightBar.RightBorder)
-    end
 
     local function GetFrameColor()
         local r, g, b = PlayerFrame.PlayerFrameContainer.FrameTexture:GetVertexColor()
@@ -1234,15 +1059,6 @@ local function AdjustAlternateBars()
     if FCUIClassicDB.hideUnitFramePlayerSecondResource then
         if AlternatePowerBar then
             AlternatePowerBar:SetAlpha(0)
-        end
-        if MonkStaggerBar then
-            MonkStaggerBar:SetAlpha(0)
-        end
-        if EvokerEbonMightBar then
-            EvokerEbonMightBar:SetAlpha(0)
-        end
-        if DemonHunterSoulFragmentsBar then
-            DemonHunterSoulFragmentsBar:SetAlpha(0)
         end
         FCUI.changedSecondResourceAlpha = true
     end

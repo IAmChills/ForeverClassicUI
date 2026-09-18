@@ -794,9 +794,9 @@ local function MakeClassicFrame(frame)
             -- Match Forever health bar size (124 x 20); default mana is 124 x 10.
             local health = hpContainer.HealthBar
             local hw, hh = health:GetSize()
-            manaBar:SetSize(hw -5, hh -10)
+            manaBar:SetSize(hw -5, hh - 4)
             manaBar:ClearAllPoints()
-            manaBar:SetPoint("TOPLEFT", health, "BOTTOMLEFT", 2, 0)
+            manaBar:SetPoint("TOPLEFT", health, "BOTTOMLEFT", 2, 4)
             if manaBar.FullPowerFrame then
                 manaBar.FullPowerFrame:SetSize(hw, hh)
             end

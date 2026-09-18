@@ -310,7 +310,7 @@ local function AnchorUnitCastbar(castBar)
   local x = parent.smallSize and 38 or 43
   local y = parent.smallSize and 3 or 5
   if parent.haveToT then
-    y = parent.smallSize and -48 or -46
+    y = parent.smallSize and -40 or -38
   end
   if castBar.ClearPointsOffset then
     castBar:ClearPointsOffset()
